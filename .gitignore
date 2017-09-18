@@ -1,0 +1,7 @@
+*.cs
+dl/
+*.torrent
+src/*.o
+src/*owin
+loelauncher
+loelauncher.exe
