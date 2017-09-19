@@ -7,18 +7,18 @@ SOURCE += src
 UNAME_S := $(shell uname -s)
 # Linux
 ifeq ($(UNAME_S),Linux)
-    LIBS += -laria2 -lSDL2 -lSDL2_image -lnfd
-    INCLUDES += -Inativefiledialog/src/include
+    LIBS += -Lprefix/lib -laria2 -lSDL2 -lSDL2_image
+    INCLUDES += -Iprefix/include
 
     MINGW = x86_64-w64-mingw32
-    LIBSWIN += -LSDL2-2.0.5/x86_64-w64-mingw32/lib -LSDL2_image-2.0.1/x86_64-w64-mingw32/lib -Lprefix/lib $(LIBS)
-    INCLUDESWIN += -ISDL2-2.0.5/x86_64-w64-mingw32/include -ISDL2-2.0.5/x86_64-w64-mingw32/include/SDL2 -ISDL2_image-2.0.1/x86_64-w64-mingw32/include -Iprefix/include
+    LIBSWIN += $(LIBS)
+    INCLUDESWIN += $(INCLUDES)
     CCWIN = $(MINGW)-g++
 endif
 # macOS
 ifeq ($(UNAME_S),Darwin)
-    LIBS += -Lprefix/lib -Lnativefiledialog/build/lib/Release/x64/ -laria2 -lSDL2 -lSDL2_image -lnfd -framework Foundation -framework AppKit
-    INCLUDES += -Iprefix/include -Inativefiledialog/src/include
+    LIBS += -Lprefix/lib -laria2 -lSDL2 -lSDL2_image
+    INCLUDES += -Iprefix/include
 
     DMGVOLNAME = Legends of Equestria installer
     # Workaround because make doesn't like spaces in target filenames

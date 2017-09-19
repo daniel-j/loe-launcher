@@ -13,3 +13,4 @@ Legends of Equestria.app
 windows/*.dll
 windows/icon.ico
 prefix/
+deps/

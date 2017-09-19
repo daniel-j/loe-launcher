@@ -8,7 +8,7 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include <aria2/aria2.h>
-#include <nfd.h>
+#include "tinyfiledialogs.h"
 
 #define WINDOW_WIDTH 640
 #define WINDOW_HEIGHT 360
@@ -296,7 +296,7 @@ int main(int argc, char** argv) {
       } else if (e.type == SDL_MOUSEMOTION || e.type == SDL_MOUSEBUTTONDOWN || e.type == SDL_MOUSEBUTTONUP) {
         if (button.update(mousex, mousey, e.type)) {
           printf("Clicked button!\n");
-          nfdchar_t* outPath = nullptr;
+          /*nfdchar_t* outPath = nullptr;
           nfdresult_t result = NFD_PickFolder( nullptr, &outPath );
           if ( result == NFD_OKAY ) {
               // setGameDir(outPath);
@@ -305,6 +305,12 @@ int main(int argc, char** argv) {
               puts("User pressed cancel.");
           } else {
               fprintf(stderr, "Error: %s\n", NFD_GetError() );
+          }*/
+          const char* path = tinyfd_selectFolderDialog("Select a file", nullptr);
+          if (path != nullptr) {
+            printf("selected path: %s\n", path);
+          } else {
+            printf("no path!\n");
           }
           // button.disabled = true;
         }
