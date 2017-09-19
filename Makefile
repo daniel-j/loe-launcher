@@ -1,9 +1,8 @@
 TARGET = loelauncher
 LIBS = -laria2 -lSDL2 -lSDL2_image
 INCLUDES = -I/Users/daniel/prefix/include -L/Users/daniel/prefix/lib
-INCLUDESWIN = -ISDL2-2.0.5/x86_64-w64-mingw32/include -ISDL2-2.0.5/x86_64-w64-mingw32/include/SDL2 -LSDL2-2.0.5/x86_64-w64-mingw32/lib -ISDL2_image-2.0.1/x86_64-w64-mingw32/include -LSDL2_image-2.0.1/x86_64-w64-mingw32/lib -Iaria2-release-1.32.0/src/includes
-LFLAGS =
-CC = g++
+INCLUDESWIN = -ISDL2-2.0.5/x86_64-w64-mingw32/include -ISDL2-2.0.5/x86_64-w64-mingw32/include/SDL2 -LSDL2-2.0.5/x86_64-w64-mingw32/lib -ISDL2_image-2.0.1/x86_64-w64-mingw32/include -LSDL2_image-2.0.1/x86_64-w64-mingw32/lib -Iprefix/include -Lprefix/lib
+LFLAGS = -static-libgcc -static-libstdc++
 CFLAGS = -g -Wall -O2 -std=c++11
 SOURCE = src
 
@@ -12,7 +11,7 @@ CCWIN = x86_64-w64-mingw32-g++
 MACOSAPP = .loe.app
 DMGVOLNAME = Legends of Equestria installer
 
-.PHONY: default all clean windows macosapp
+.PHONY: default all clean windows windowsinstaller macosapp
 
 default: $(TARGET)
 all: default
@@ -22,19 +21,38 @@ OBJECTSWIN = $(patsubst %.cpp, %.owin, $(wildcard $(SOURCE)/*.cpp))
 HEADERS = $(wildcard $(SOURCE)/*.h)
 
 %.o: %.cpp $(HEADERS)
-	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
+	$(CXX) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
 %.owin: %.cpp $(HEADERS)
 	$(CCWIN) $(CFLAGS) $(INCLUDESWIN) -c $< -o $@
 
-.PRECIOUS: $(TARGET) $(OBJECTS)
+.PRECIOUS: $(TARGET) $(OBJECTS) $(OBJECTSWIN)
 
 $(TARGET): $(OBJECTS)
-	$(CC) $(CFLAGS) $(INCLUDES) -o $@ $(OBJECTS) $(LFLAGS) $(LIBS) 
+	$(CXX) $(CFLAGS) $(INCLUDES) -o $@ $(OBJECTS) $(LFLAGS) $(LIBS)
+	strip -x $@
+
+windows/icon.ico: assets/icon.png
+	convert assets/icon.png windows/icon.ico
 
 windows: $(TARGET).exe
-$(TARGET).exe: $(OBJECTSWIN)
-	$(CCWIN) $(CFLAGS) $(INCLUDESWIN) -o $@ $(OBJECTSWIN) $(LFLAGS) $(LIBS)
+$(TARGET).exe: $(OBJECTSWIN) windows/icon.ico
+	x86_64-w64-mingw32-windres windows/exe.rc -O coff -o src/res.owin
+	$(CCWIN) $(CFLAGS) $(INCLUDESWIN) -o $@ $(OBJECTSWIN) src/res.owin $(LFLAGS) $(LIBS)
+	x86_64-w64-mingw32-strip -x $@
+
+windowsinstaller: $(TARGET).exe windows/icon.ico install-loe.msi
+install-loe.msi:
+	rm -rf wininst
+	mkdir -p wininst
+	cp loelauncher.exe wininst/
+	cp -r assets wininst/
+	cp -r windows/*.dll wininst/
+	rm -f install-loe.msi
+	msi-packager -n "Legends of Equestria" -v "1.0" -m "Legends of Equestria" -a x64 \
+		-u 4A00EFB3-F9D9-497E-B0FE-1EB313EF8ECE -i windows/icon.ico -e loelauncher.exe -l \
+		wininst "install-loe.msi"
+	rm -rf wininst
 
 $(MACOSAPP):
 	mkdir -p "Legends of Equestria.app"
@@ -77,5 +95,5 @@ macosapp: $(MACOSAPP) $(MACOSAPP)/Contents/Info.plist $(MACOSAPP)/Contents/MacOS
 
 clean:
 	-rm -f $(SOURCE)/*.o $(SOURCE)/*.owin
-	-rm -f $(TARGET) $(TARGET).exe
+	-rm -f $(TARGET) $(TARGET).exe "install-loe.msi" "windows/exe.res" "windows/icon.ico"
 	-rm -rf "$(MACOSAPP)" "Legends of Equestria.app"

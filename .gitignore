@@ -6,5 +6,10 @@ src/*owin
 loelauncher
 loelauncher.exe
 Legends of Equestria.app
+.loe.app
 .DS_Store
 *.dmg
+*.msi
+windows/*.dll
+windows/icon.ico
+prefix/

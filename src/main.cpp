@@ -350,3 +350,8 @@ int main(int argc, char** argv) {
 
   return EXIT_SUCCESS;
 }
+
+// To make it build on Windows
+int WinMain() {
+  return main(0, nullptr);
+}
