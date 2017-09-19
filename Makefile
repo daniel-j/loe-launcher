@@ -11,7 +11,7 @@ CCWIN = x86_64-w64-mingw32-g++
 MACOSAPP = .loe.app
 DMGVOLNAME = Legends of Equestria installer
 
-.PHONY: default all clean windows windowsinstaller macosapp
+.PHONY: default all clean windows windowsinstaller macosapp macosinstaller
 
 default: $(TARGET)
 all: default
@@ -49,7 +49,7 @@ install-loe.msi:
 	cp -r assets wininst/
 	cp -r windows/*.dll wininst/
 	rm -f install-loe.msi
-	msi-packager -n "Legends of Equestria" -v "1.0" -m "Legends of Equestria" -a x64 \
+	msi-packager -n "Legends of Equestria" -v "1.0.0" -m "Legends of Equestria" -a x64 \
 		-u 4A00EFB3-F9D9-497E-B0FE-1EB313EF8ECE -i windows/icon.ico -e loelauncher.exe -l \
 		wininst "install-loe.msi"
 	rm -rf wininst
@@ -87,7 +87,8 @@ $(MACOSAPP)/Contents/MacOS/assets: $(MACOSAPP) assets
 	mkdir -p "$(MACOSAPP)/Contents/MacOS/"
 	cp -r assets "$(MACOSAPP)/Contents/MacOS/"
 
-LoE.dmg: $(MACOSAPP)
+macosinstaller: LoE.dmg $(MACOSAPP)
+LoE.dmg:
 	@macos/createdmg.sh "$(MACOSAPP)" "$(DMGVOLNAME)"
 
 macosapp: $(MACOSAPP) $(MACOSAPP)/Contents/Info.plist $(MACOSAPP)/Contents/MacOS/run.sh $(MACOSAPP)/Contents/Resources/loe.icns $(MACOSAPP)/Contents/MacOS/assets $(MACOSAPP)/Contents/MacOS/loelauncher
