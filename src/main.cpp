@@ -2,7 +2,7 @@
 #include <iostream>
 // #include <chrono>
 
-#include <experimental/filesystem>
+//#include <experimental/filesystem>
 #include <algorithm>
 #include <math.h>
 #include <SDL2/SDL.h>
@@ -12,7 +12,7 @@
 #define WINDOW_WIDTH 640
 #define WINDOW_HEIGHT 360
 
-namespace fs = std::experimental::filesystem;
+//namespace fs = std::experimental::filesystem;
 
 SDL_mutex* arialock;
 aria2::Session* session;
@@ -240,7 +240,7 @@ int main(int argc, char** argv) {
     SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_SHOWN
   );
 
-  SDL_Surface* icon = IMG_Load("icon.png");
+  SDL_Surface* icon = IMG_Load("assets/icon.png");
   SDL_SetWindowIcon(window, icon);
   SDL_FreeSurface(icon);
 
@@ -252,18 +252,18 @@ int main(int argc, char** argv) {
   SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
   SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "best");
 
-  std::string path = "slides";
+  /*std::string path = "slides";
   for (auto & p : fs::directory_iterator(path)) {
     std::cout << p << std::endl;
-  }
+  }*/
 
-  Image bgimage(renderer, "slides/cantermore.png");
-  Image logo(renderer, "logo.png");
+  Image bgimage(renderer, "assets/slides/cantermore.png");
+  Image logo(renderer, "assets/logo.png");
 
-  Button::texture = IMG_LoadTexture(renderer, "button.png");
+  Button::texture = IMG_LoadTexture(renderer, "assets/button.png");
   if (!Button::texture) {
     printf("IMG_Load: %s\n", IMG_GetError());
-    return EXIT_FAILURE;
+    // return EXIT_FAILURE;
   }
 
   Button button(renderer, 475, WINDOW_HEIGHT - 100);
@@ -279,7 +279,7 @@ int main(int argc, char** argv) {
   SDL_RenderPresent(renderer);
 
   arialock = SDL_CreateMutex();
-  SDL_Thread* thread = SDL_CreateThread(AriaThread, "AriaThread", (void*)"loe.torrent");
+  // SDL_Thread* thread = SDL_CreateThread(AriaThread, "AriaThread", (void*)"loe.torrent");
 
   bool isrunning = true;
 
@@ -342,7 +342,7 @@ int main(int argc, char** argv) {
   SDL_DestroyRenderer(renderer);
   SDL_DestroyWindow(window);
   stoparia = true;
-  SDL_WaitThread(thread, NULL);
+  // SDL_WaitThread(thread, NULL);
   SDL_DestroyMutex(arialock);
 
   IMG_Quit();
