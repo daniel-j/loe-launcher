@@ -2,13 +2,9 @@
 
 set -e
 
+. ./env.sh
+
 root=$(pwd)
-
-CROSSWIN="false"
-UNAME=`uname -s`
-MACOS=$([ "$UNAME" == "Darwin" ] && echo true || echo false)
-LINUX=$([ "$UNAME" == "Linux" ] && echo true || echo false)
-
 
 SRC="$root/deps"
 export SHELL=/bin/bash
@@ -80,5 +76,11 @@ make install
 # cp ../lib/Release/x64/libnfd.a "$PREFIX/lib/"
 # cp -r ../../src/include/. "$PREFIX/include/"
 # make clean
+
+$MACOS && (
+	cd "$SRC/dylibbundler"
+	make install PREFIX="$PREFIX"
+	make clean
+)
 
 touch "$PREFIX/built_libs"

@@ -1,5 +1,7 @@
 TARGET = loelauncher
 
+export PATH := prefix/bin:$(PATH)
+
 LFLAGS +=
 CFLAGS += -g -Wall -O2 -std=c++11
 SOURCE += src
@@ -80,6 +82,7 @@ $(MACOSAPP)/Contents/MacOS/loelauncher: $(MACOSAPP) loelauncher
 	mkdir -p "$(MACOSAPP)/Contents/MacOS/"
 	cp loelauncher "$(MACOSAPP)/Contents/MacOS/"
 	dylibbundler -od -b -x "$(MACOSAPP)/Contents/MacOS/loelauncher" -d "$(MACOSAPP)/Contents/libs"
+	strip -x "$(MACOSAPP)/Contents/MacOS/loelauncher" $(MACOSAPP)/Contents/libs/*.dylib
 
 $(MACOSAPP)/Contents/Info.plist: $(MACOSAPP) macos/Info.plist
 	mkdir -p "$(MACOSAPP)/Contents/"
