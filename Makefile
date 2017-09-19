@@ -97,4 +97,4 @@ macosapp: $(MACOSAPP) $(MACOSAPP)/Contents/Info.plist $(MACOSAPP)/Contents/MacOS
 clean:
 	-rm -f $(SOURCE)/*.o $(SOURCE)/*.owin
 	-rm -f $(TARGET) $(TARGET).exe "install-loe.msi" "windows/exe.res" "windows/icon.ico"
-	-rm -rf "$(MACOSAPP)" "Legends of Equestria.app"
+	-rm -rf "$(MACOSAPP)" "Legends of Equestria.app" "LoE.dmg"
