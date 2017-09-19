@@ -2,7 +2,7 @@ TARGET = loelauncher
 LIBS = -laria2 -lSDL2 -lSDL2_image
 INCLUDES = -I/Users/daniel/prefix/include -L/Users/daniel/prefix/lib
 INCLUDESWIN = -ISDL2-2.0.5/x86_64-w64-mingw32/include -ISDL2-2.0.5/x86_64-w64-mingw32/include/SDL2 -LSDL2-2.0.5/x86_64-w64-mingw32/lib -ISDL2_image-2.0.1/x86_64-w64-mingw32/include -LSDL2_image-2.0.1/x86_64-w64-mingw32/lib -Iprefix/include -Lprefix/lib
-LFLAGS = -static-libgcc -static-libstdc++
+LFLAGS =
 CFLAGS = -g -Wall -O2 -std=c++11
 SOURCE = src
 
@@ -87,11 +87,11 @@ $(MACOSAPP)/Contents/MacOS/assets: $(MACOSAPP) assets
 	mkdir -p "$(MACOSAPP)/Contents/MacOS/"
 	cp -r assets "$(MACOSAPP)/Contents/MacOS/"
 
-macosinstaller: LoE.dmg $(MACOSAPP)
+macosapp: $(MACOSAPP) $(MACOSAPP)/Contents/Info.plist $(MACOSAPP)/Contents/MacOS/run.sh $(MACOSAPP)/Contents/Resources/loe.icns $(MACOSAPP)/Contents/MacOS/assets $(MACOSAPP)/Contents/MacOS/loelauncher
+
+macosinstaller: macosapp LoE.dmg
 LoE.dmg:
 	@macos/createdmg.sh "$(MACOSAPP)" "$(DMGVOLNAME)"
-
-macosapp: $(MACOSAPP) $(MACOSAPP)/Contents/Info.plist $(MACOSAPP)/Contents/MacOS/run.sh $(MACOSAPP)/Contents/Resources/loe.icns $(MACOSAPP)/Contents/MacOS/assets $(MACOSAPP)/Contents/MacOS/loelauncher
 
 
 clean:
