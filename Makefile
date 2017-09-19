@@ -1,15 +1,29 @@
 TARGET = loelauncher
-LIBS = -laria2 -lSDL2 -lSDL2_image
-INCLUDES = -I/Users/daniel/prefix/include -L/Users/daniel/prefix/lib
-INCLUDESWIN = -ISDL2-2.0.5/x86_64-w64-mingw32/include -ISDL2-2.0.5/x86_64-w64-mingw32/include/SDL2 -LSDL2-2.0.5/x86_64-w64-mingw32/lib -ISDL2_image-2.0.1/x86_64-w64-mingw32/include -LSDL2_image-2.0.1/x86_64-w64-mingw32/lib -Iprefix/include -Lprefix/lib
-LFLAGS =
-CFLAGS = -g -Wall -O2 -std=c++11
-SOURCE = src
 
-CCWIN = x86_64-w64-mingw32-g++
+LFLAGS +=
+CFLAGS += -g -Wall -O2 -std=c++11
+SOURCE += src
 
-MACOSAPP = .loe.app
-DMGVOLNAME = Legends of Equestria installer
+UNAME_S := $(shell uname -s)
+# Linux
+ifeq ($(UNAME_S),Linux)
+    LIBS += -laria2 -lSDL2 -lSDL2_image -lnfd
+    INCLUDES += -Inativefiledialog/src/include
+
+    MINGW = x86_64-w64-mingw32
+    LIBSWIN += -LSDL2-2.0.5/x86_64-w64-mingw32/lib -LSDL2_image-2.0.1/x86_64-w64-mingw32/lib -Lprefix/lib $(LIBS)
+    INCLUDESWIN += -ISDL2-2.0.5/x86_64-w64-mingw32/include -ISDL2-2.0.5/x86_64-w64-mingw32/include/SDL2 -ISDL2_image-2.0.1/x86_64-w64-mingw32/include -Iprefix/include
+    CCWIN = $(MINGW)-g++
+endif
+# macOS
+ifeq ($(UNAME_S),Darwin)
+    LIBS += -Lprefix/lib -Lnativefiledialog/build/lib/Release/x64/ -laria2 -lSDL2 -lSDL2_image -lnfd -framework Foundation -framework AppKit
+    INCLUDES += -Iprefix/include -Inativefiledialog/src/include
+
+    DMGVOLNAME = Legends of Equestria installer
+    # Workaround because make doesn't like spaces in target filenames
+    MACOSAPP = .loe.app
+endif
 
 .PHONY: default all clean windows windowsinstaller macosapp macosinstaller
 
@@ -28,7 +42,7 @@ HEADERS = $(wildcard $(SOURCE)/*.h)
 
 .PRECIOUS: $(TARGET) $(OBJECTS) $(OBJECTSWIN)
 
-$(TARGET): $(OBJECTS)
+$(TARGET): $(OBJECTS) Makefile
 	$(CXX) $(CFLAGS) $(INCLUDES) -o $@ $(OBJECTS) $(LFLAGS) $(LIBS)
 	strip -x $@
 
@@ -36,10 +50,10 @@ windows/icon.ico: assets/icon.png
 	convert assets/icon.png windows/icon.ico
 
 windows: $(TARGET).exe
-$(TARGET).exe: $(OBJECTSWIN) windows/icon.ico
-	x86_64-w64-mingw32-windres windows/exe.rc -O coff -o src/res.owin
-	$(CCWIN) $(CFLAGS) $(INCLUDESWIN) -o $@ $(OBJECTSWIN) src/res.owin $(LFLAGS) $(LIBS)
-	x86_64-w64-mingw32-strip -x $@
+$(TARGET).exe: $(OBJECTSWIN) windows/icon.ico Makefile
+	$(MINGW)-windres windows/exe.rc -O coff -o src/res.owin
+	$(CCWIN) $(CFLAGS) $(INCLUDESWIN) -o $@ $(OBJECTSWIN) src/res.owin $(LFLAGS) $(LIBSWIN)
+	$(MINGW)-strip -x $@
 
 windowsinstaller: $(TARGET).exe windows/icon.ico install-loe.msi
 install-loe.msi:
