@@ -41,7 +41,7 @@ mkdir -pv "$PREFIX"
 
 echo "Building SDL2"
 cd "$SRC/SDL2"
-bash ./autogen.sh
+bash ./autogen.sh || true
 mkdir -p build
 cd build
 ../configure --prefix="$PREFIX" PKG_CONFIG_PATH="$PKG_CONFIG_PATH" \
@@ -57,7 +57,7 @@ make distclean
 
 echo "Building SDL2_image"
 cd "$SRC/SDL2_image"
-bash ./autogen.sh
+bash ./autogen.sh || true
 ./configure --prefix="$PREFIX" --with-sdl-prefix="$PREFIX" PKG_CONFIG_PATH="$PKG_CONFIG_PATH" --disable-static
 make $makearg
 make install
