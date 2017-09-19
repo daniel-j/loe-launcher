@@ -6,9 +6,9 @@ LFLAGS +=
 CFLAGS += -g -Wall -O2 -std=c++11
 SOURCE += src
 
-UNAME_S := $(shell uname -s)
+PLATFORM := $(shell uname -s)
 # Linux
-ifeq ($(UNAME_S),Linux)
+ifeq ($(PLATFORM),Linux)
     LIBS += -Lprefix/lib -laria2 -lSDL2 -lSDL2_image
     INCLUDES += -Iprefix/include
 
@@ -18,7 +18,7 @@ ifeq ($(UNAME_S),Linux)
     CCWIN = $(MINGW)-g++
 endif
 # macOS
-ifeq ($(UNAME_S),Darwin)
+ifeq ($(PLATFORM),Darwin)
     LIBS += -Lprefix/lib -laria2 -lSDL2 -lSDL2_image
     INCLUDES += -Iprefix/include
 
