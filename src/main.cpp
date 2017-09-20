@@ -1,10 +1,13 @@
 
+#ifdef _WIN32
+#define NTDDI_VERSION NTDDI_VISTA
+#endif
+
 #include <iostream>
-// #include <chrono>
+#include <chrono>
 
 //#include <experimental/filesystem>
 #include <algorithm>
-#include <math.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include <aria2/aria2.h>
@@ -14,6 +17,9 @@
 #define WINDOW_WIDTH 640
 #define WINDOW_HEIGHT 360
 #define APP_NAME "loelauncher"
+
+#define MAX(x, y) (((x) > (y)) ? (x) : (y))
+#define MIN(x, y) (((x) < (y)) ? (x) : (y))
 
 //namespace fs = std::experimental::filesystem;
 
@@ -70,6 +76,7 @@ int AriaThread(void *data) {
   opts.push_back(aria2::KeyVals::value_type("no-conf", "true"));
   opts.push_back(aria2::KeyVals::value_type("check-integrity", "true"));
   opts.push_back(aria2::KeyVals::value_type("seed-time", "0"));
+  opts.push_back(aria2::KeyVals::value_type("bt-tracker-interval", "10"));
   opts.push_back(aria2::KeyVals::value_type("dir", "dl"));
   session = aria2::sessionNew(opts, config);
   
@@ -79,12 +86,12 @@ int AriaThread(void *data) {
   rv = aria2::addTorrent(session, nullptr, (char*)data, options);
   if (rv < 0) {
     SDL_UnlockMutex(arialock);
-    std::cerr << "Failed to add download " << (char*)data << std::endl;
+    std::cerr << "Failed to add torrent " << (char*)data << std::endl;
     return 1;
   }
   SDL_UnlockMutex(arialock);
 
-  // auto start = std::chrono::steady_clock::now();
+  auto start = std::chrono::steady_clock::now();
   for (;;) {
     if (SDL_LockMutex(arialock) != 0) {
       fprintf(stderr, "Couldn't lock mutex\n");
@@ -109,12 +116,11 @@ int AriaThread(void *data) {
       // printf("%f\n", progress * 100);
     }
 
-    /*
     auto now = std::chrono::steady_clock::now();
     auto count =
         std::chrono::duration_cast<std::chrono::milliseconds>(now - start).count();
     aria2::GlobalStat gstat = aria2::getGlobalStat(session);
-    std::vector<aria2::A2Gid> gids = aria2::getActiveDownload(session);
+    // std::vector<aria2::A2Gid> gids = aria2::getActiveDownload(session);
 
     // Print progress information once per 500ms
     if (count >= 500) {
@@ -141,7 +147,7 @@ int AriaThread(void *data) {
         }
       }
     }
-    */
+    
     SDL_UnlockMutex(arialock);
   }
 
@@ -287,7 +293,7 @@ int main(int argc, char** argv) {
   SDL_RenderPresent(renderer);
 
   arialock = SDL_CreateMutex();
-  // SDL_Thread* thread = SDL_CreateThread(AriaThread, "AriaThread", (void*)"loe.torrent");
+  SDL_Thread* thread = SDL_CreateThread(AriaThread, "AriaThread", (void*)"loe.torrent");
 
   bool isrunning = true;
 
@@ -333,9 +339,9 @@ int main(int argc, char** argv) {
       WINDOW_WIDTH / 2 - bgimage.width / 4 - mousex / 40 + WINDOW_WIDTH / 80,
       WINDOW_HEIGHT / 2 - bgimage.height / 3 - mousey / 40 + WINDOW_HEIGHT / 80, 
       0.5,
-      std::min(1.0, t / 2000.0)
+      MIN(1.0, t / 2000.0)
     );
-    logo.render(10, 10, 0.7, std::min(0.8, t / 1000.0) + 0.2);
+    logo.render(10, 10, 0.7, MIN(0.8, t / 1000.0) + 0.2);
     
     button.render();
 
@@ -366,16 +372,11 @@ int main(int argc, char** argv) {
   SDL_DestroyRenderer(renderer);
   SDL_DestroyWindow(window);
   stoparia = true;
-  // SDL_WaitThread(thread, NULL);
+  SDL_WaitThread(thread, NULL);
   SDL_DestroyMutex(arialock);
 
   IMG_Quit();
   SDL_Quit();
 
   return EXIT_SUCCESS;
-}
-
-// To make it build on Windows
-int WinMain() {
-  return main(0, nullptr);
 }

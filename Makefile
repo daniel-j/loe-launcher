@@ -1,21 +1,24 @@
 TARGET = loelauncher
 
-export PATH := prefix/bin:$(PATH)
+export PATH := prefix/bin:prefix-win/bin:$(PATH)
 
 LFLAGS +=
-CFLAGS += -g -Wall -O2 -std=c++14
+CFLAGS += -g -Wall -O3 -std=c++14
 SOURCE += src
 
 PLATFORM := $(shell uname -s)
 # Linux
 ifeq ($(PLATFORM),Linux)
+    CC := $(CC) -U_FORTIFY_SOURCE -include "prefix/libcwrap.h"
+    CXX := $(CXX) -U_FORTIFY_SOURCE -include "prefix/libcwrap.h"
     LIBS += -Lprefix/lib -laria2 -lSDL2 -lSDL2_image
     INCLUDES += -Iprefix/include
 
     MINGW = x86_64-w64-mingw32
-    LIBSWIN += $(LIBS)
-    INCLUDESWIN += $(INCLUDES)
+    LIBSWIN += -lmingw32 -lSDL2main -mwindows -lole32 -lcomdlg32 -luuid -Lprefix-win/lib $(LIBS)
+    INCLUDESWIN += -Iprefix-win/include $(INCLUDES)
     CCWIN = $(MINGW)-g++
+    APPDIR = LoE.AppDir
 endif
 # macOS
 ifeq ($(PLATFORM),Darwin)
@@ -27,7 +30,7 @@ ifeq ($(PLATFORM),Darwin)
     MACOSAPP = .loe.app
 endif
 
-.PHONY: default all clean windows windowsinstaller macosapp macosinstaller
+.PHONY: default all clean appimage windows windowsinstaller macosapp macosinstaller
 
 default: $(TARGET)
 all: default
@@ -58,13 +61,27 @@ $(TARGET).exe: $(OBJECTSWIN) windows/icon.ico Makefile
 	$(CCWIN) $(CFLAGS) $(INCLUDESWIN) -o $@ $(OBJECTSWIN) src/res.owin $(LFLAGS) $(LIBSWIN)
 	$(MINGW)-strip -x $@
 
-windowsinstaller: $(TARGET).exe windows/icon.ico install-loe.msi
-install-loe.msi:
+appimage:
+	rm -rf $(APPDIR)
+	mkdir -p $(APPDIR)
+	cp loelauncher $(APPDIR)/
+	cp -r assets $(APPDIR)/
+	mkdir -p $(APPDIR)/libs
+	LD_LIBRARY_PATH=prefix/lib ./linux/findlibs.sh ./loelauncher $(APPDIR)/libs
+	cp linux/AppRun $(APPDIR)/
+	cp linux/loe.desktop $(APPDIR)/
+	ln -s assets/icon.png $(APPDIR)/.DirIcon
+	strip -x $(APPDIR)/loelauncher $(APPDIR)/libs/*.so*
+	deps/appimagetool.AppImage $(APPDIR) -v LoE.AppImage
+	mv LoE.AppImage "Legends of Equestria.AppImage"
+
+windowsinstaller:
 	rm -rf wininst
 	mkdir -p wininst
 	cp loelauncher.exe wininst/
 	cp -r assets wininst/
 	cp -r windows/*.dll wininst/
+	$(MINGW)-strip -x wininst/*.dll*
 	rm -f install-loe.msi
 	msi-packager -n "Legends of Equestria" -v "1.0.0" -m "Legends of Equestria" -a x64 \
 		-u 4A00EFB3-F9D9-497E-B0FE-1EB313EF8ECE -i windows/icon.ico -e loelauncher.exe -l \
@@ -107,8 +124,7 @@ $(MACOSAPP)/Contents/MacOS/assets: $(MACOSAPP) assets
 
 macosapp: $(MACOSAPP) $(MACOSAPP)/Contents/Info.plist $(MACOSAPP)/Contents/MacOS/run.sh $(MACOSAPP)/Contents/Resources/loe.icns $(MACOSAPP)/Contents/MacOS/assets $(MACOSAPP)/Contents/MacOS/loelauncher
 
-macosinstaller: macosapp LoE.dmg
-LoE.dmg:
+macosinstaller:
 	@macos/createdmg.sh "$(MACOSAPP)" "$(DMGVOLNAME)"
 
 

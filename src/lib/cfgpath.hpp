@@ -35,7 +35,7 @@
 #ifndef CFGPATH_H_
 #define CFGPATH_H_
 
-#ifdef _MSC_VER
+#ifdef _WIN32
 #define inline __inline
 #include <direct.h>
 #define mkdir _mkdir
@@ -51,8 +51,10 @@
 #define MAX_PATH PATH_MAX
 #define PATH_SEPARATOR_CHAR '/'
 #define PATH_SEPARATOR_STRING "/"
-#elif defined(WIN32)
+#elif defined(_WIN32)
+#define NTDDI_VERSION NTDDI_VISTA
 #include <shlobj.h>
+#include <knownfolders.h>
 /* MAX_PATH is defined by the Windows API */
 #define PATH_SEPARATOR_CHAR '\\'
 #define PATH_SEPARATOR_STRING "\\"
@@ -64,7 +66,7 @@
 #define PATH_SEPARATOR_CHAR '/'
 #define PATH_SEPARATOR_STRING "/"
 #else
-#error cfgpath.h functions have not been implemented for your platform!  Please send patches.
+#error cfgpath.hpp functions have not been implemented for your platform!  Please send patches.
 #endif
 
 /** Get an absolute path to a configuration folder, specific to this user.
@@ -145,12 +147,12 @@ static inline void get_user_config_folder(char *out, unsigned int maxlen, const 
 	*out = PATH_SEPARATOR_CHAR;
 	out++;
 	*out = 0;
-#elif defined(WIN32)
+#elif defined(_WIN32)
 	if (maxlen < MAX_PATH) {
 		out[0] = 0;
 		return;
 	}
-	if (!SUCCEEDED(SHGetKnownFolderPath(FOLDERID_LocalAppData, KF_FLAG_CREATE, nullptr, out))) {
+	if (!SUCCEEDED(SHGetKnownFolderPath(FOLDERID_LocalAppData, KF_FLAG_CREATE, nullptr, (WCHAR**)&out))) {
 		out[0] = 0;
 		return;
 	}
@@ -273,7 +275,7 @@ static inline void get_user_data_folder(char *out, unsigned int maxlen, const ch
 	*out = '/';
 	out++;
 	*out = 0;
-#elif defined(WIN32) || defined(__APPLE__)
+#elif defined(_WIN32) || defined(__APPLE__)
 	/* No distinction under Windows or OS X */
 	get_user_config_folder(out, maxlen, appname);
 #endif
@@ -358,7 +360,7 @@ static inline void get_user_cache_folder(char *out, unsigned int maxlen, const c
 	*out = '/';
 	out++;
 	*out = 0;
-#elif defined(WIN32) || defined(__APPLE__)
+#elif defined(_WIN32) || defined(__APPLE__)
 	/* No distinction under Windows or OS X */
 	get_user_config_folder(out, maxlen, appname);
 #endif

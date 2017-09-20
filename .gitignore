@@ -13,4 +13,7 @@ Legends of Equestria.app
 windows/*.dll
 windows/icon.ico
 prefix/
+prefix-win/
 deps/
+LoE.AppDir/
+Legends\ of\ Equestria.AppImage

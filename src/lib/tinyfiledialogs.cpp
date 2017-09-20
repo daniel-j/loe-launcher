@@ -101,10 +101,10 @@ misrepresented as being the original software.
   #define _WIN32_WINNT 0x0500
  #endif
  #ifndef TINYFD_NOLIB
-  #include <Windows.h>
+  #include <windows.h>
   /*#define TINYFD_NOSELECTFOLDERWIN*/
   #ifndef TINYFD_NOSELECTFOLDERWIN
-	#include <Shlobj.h>
+	#include <shlobj.h>
   #endif /*TINYFD_NOSELECTFOLDERWIN*/
  #endif
  #include <conio.h>
@@ -725,7 +725,7 @@ static void runSilentA(char const * const aString)
 	PROCESS_INFORMATION ProcessInfo;
 	char * lArgs;
 	char * pEnvCMD = NULL;
-	char * pDefaultCMD = "CMD.EXE";
+	const char * pDefaultCMD = "CMD.EXE";
 	ULONG rc;
 	int lStringLen = 0;
 
@@ -796,7 +796,7 @@ static void runSilentW(wchar_t const * const aString, wchar_t const * const aDia
 	ULONG rc;
 	wchar_t * lArgs;
 	wchar_t * pEnvCMD;
-	wchar_t * pDefaultCMD = L"CMD.EXE";
+	const wchar_t * pDefaultCMD = L"CMD.EXE";
 	int lStringLen = 0;
 
 	memset(&StartupInfo, 0, sizeof(StartupInfo));
