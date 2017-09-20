@@ -24,12 +24,20 @@ $MACOS && makearg="-j$(sysctl -n hw.ncpu)" || makearg="-j$(nproc)"
 rm -rf "$PREFIX"
 mkdir -pv "$PREFIX"
 
-# echo "Building libpng"
-# cd "$SRC/libpng"
-# ./configure --prefix="$PREFIX" PKG_CONFIG_PATH="$PKG_CONFIG_PATH" --disable-static
-# make $makearg
-# make install
-# make distclean
+# echo "Building zlib"
+# cd "$SRC/zlib"
+# ./configure --prefix="$PREFIX" -shared -static
+# make -f win32/Makefile.gcc SHARED_MODE=1 CC="$MINGW-gcc" AR="$MINGW-ar" RC="$MINGW-windres" STRIP="$MINGW-strip" IMPLIB=libz.dll.a
+# make install -f win32/Makefile.gcc SHARED_MODE=1 INCLUDE_PATH="$PREFIX/include" LIBRARY_PATH="$PREFIX/lib" BINARY_PATH="$PREFIX/bin"
+# make clean -f win32/Makefile.gcc
+# sed "s,@prefix@,$PREFIX,;s,@exec_prefix@,\${prefix},;s,@libdir@,\${exec_prefix}/lib,;s,@sharedlibdir@,\${libdir},;s,@includedir@,\${prefix}/include,;s,@VERSION@,1.2.11," < zlib.pc.in > "$PREFIX/lib/pkgconfig/zlib.pc"
+
+echo "Building libpng"
+cd "$SRC/libpng"
+./configure --prefix="$PREFIX" --host="$HOST" PKG_CONFIG_PATH="$PKG_CONFIG_PATH" --disable-static
+make $makearg
+make install
+make distclean
 
 # echo "Building FreeType"
 # cd "$SRC/freetype"
@@ -38,7 +46,7 @@ mkdir -pv "$PREFIX"
 # make install
 # make distclean
 
-$LINUX && (
+$LINUX && [ "$CROSSWIN" == "false" ] && (
 	echo "Building LibcWrapGenerator"
 	cd "$SRC"
 	valac --pkg gee-0.8 --pkg posix --pkg glib-2.0 --pkg gio-2.0 ./LibcWrapGenerator.vala
@@ -54,7 +62,7 @@ cd "$SRC/SDL2"
 bash ./autogen.sh || true
 mkdir -p build
 cd build
-../configure --prefix="$PREFIX" --host="$HOST" PKG_CONFIG_PATH="$PKG_CONFIG_PATH" CC="$CC" CXX="$CXX" \
+../configure --prefix="$PREFIX" --host="$HOST" PKG_CONFIG_PATH="$PKG_CONFIG_PATH" \
 	--enable-sdl-dlopen \
 	--disable-arts --disable-esd --disable-nas \
 	--enable-alsa --enable-pulseaudio-shared \
@@ -68,24 +76,26 @@ make distclean
 echo "Building SDL2_image"
 cd "$SRC/SDL2_image"
 bash ./autogen.sh || true
-./configure --prefix="$PREFIX" --host="$HOST" PKG_CONFIG_PATH="$PKG_CONFIG_PATH" CC="$CC" CXX="$CXX" --with-sdl-prefix="$PREFIX" --disable-static
+./configure --prefix="$PREFIX" --host="$HOST" PKG_CONFIG_PATH="$PKG_CONFIG_PATH" --with-sdl-prefix="$PREFIX" --disable-static \
+	--disable-webp --disable-gif --disable-lbm --disable-pcx --disable-pnm --disable-tga \
+	--disable-xpm --disable-xv --disable-png-shared --enable-png --disable-xcf --disable-tif
 make $makearg
 make install
 make distclean
 
-echo "Building c-ares"
-cd "$SRC/c-ares"
-./configure --prefix="$PREFIX" --host="$HOST" PKG_CONFIG_PATH="$PKG_CONFIG_PATH" CC="$CC" CXX="$CXX" --disable-static
-make $makearg
-make install
-make distclean
+# echo "Building c-ares"
+# cd "$SRC/c-ares"
+# ./configure --prefix="$PREFIX" --host="$HOST" PKG_CONFIG_PATH="$PKG_CONFIG_PATH" --disable-static
+# make $makearg
+# make install
+# make clean
 
 echo "Building aria2"
 cd "$SRC/aria2"
-./configure --prefix="$PREFIX" --host="$HOST" PKG_CONFIG_PATH="$PKG_CONFIG_PATH" CC="$CC" CXX="$CXX" \
+./configure --prefix="$PREFIX" --host="$HOST" PKG_CONFIG_PATH="$PKG_CONFIG_PATH" \
 	--disable-metalink --disable-websocket --enable-libaria2 \
 	--disable-rpath --without-sqlite3 --without-libxml2 --without-libexpat \
-	--without-libssh2 --enable-bittorrent --disable-static
+	--without-libssh2 --enable-bittorrent --disable-static --without-libcares
 make $makearg
 make install
 

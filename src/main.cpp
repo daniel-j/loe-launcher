@@ -32,6 +32,7 @@ aria2::Session* session;
 float progress = 0.0;
 bool stoparia = false;
 char configpath[MAX_PATH];
+char default_gamedir[MAX_PATH];
 std::string configfile;
 json config;
 
@@ -254,19 +255,26 @@ public:
 int main(int argc, char** argv) {
 
   get_user_config_folder(configpath, MAX_PATH, APP_NAME);
+  get_user_data_folder(default_gamedir, MAX_PATH, "LoE");
 
   printf("Config directory: %s\n", configpath);
+  printf("Default game directory: %s\n", default_gamedir);
 
   configfile = std::string(configpath) + "config.json";
   std::cout << "Config file: " << configfile << std::endl;
 
   // Default config
-  config["game_dir"] = configpath;
+  config["game_dir"] = default_gamedir;
+  config["game_version"] = "";
 
   try {
     std::ifstream f(configfile);
-    f >> config;
-  } catch (void*) {}
+    json j;
+    f >> j;
+    config.patch(j);
+  } catch (const std::invalid_argument err) {}
+
+  saveConfig();
 
   SDL_Init(SDL_INIT_VIDEO);
   IMG_Init(IMG_INIT_PNG);

@@ -15,7 +15,7 @@ ifeq ($(PLATFORM),Linux)
     INCLUDES += -Iprefix/include
 
     MINGW = x86_64-w64-mingw32
-    LIBSWIN += -lmingw32 -lSDL2main -mwindows -lole32 -lcomdlg32 -luuid -Lprefix-win/lib $(LIBS)
+    LIBSWIN += -lmingw32 -lSDL2main -mwindows -lole32 -loleaut32 -lcomdlg32 -luuid -Lprefix-win/lib $(LIBS)
     INCLUDESWIN += -Iprefix-win/include $(INCLUDES)
     CCWIN = $(MINGW)-g++
     APPDIR = LoE.AppDir
@@ -61,6 +61,19 @@ $(TARGET).exe: $(OBJECTSWIN) windows/icon.ico Makefile
 	$(CCWIN) $(CFLAGS) $(INCLUDESWIN) -o $@ $(OBJECTSWIN) src/res.owin $(LFLAGS) $(LIBSWIN)
 	$(MINGW)-strip -x $@
 
+windowsinstaller:
+	rm -rf wininst
+	mkdir -p wininst
+	cp loelauncher.exe wininst/
+	cp -r assets wininst/
+	cp -r windows/*.dll wininst/
+	$(MINGW)-strip -x wininst/*.dll*
+	rm -f install-loe.msi
+	msi-packager -n "Legends of Equestria" -v "1.0.0" -m "Legends of Equestria" -a x64 \
+		-u 4A00EFB3-F9D9-497E-B0FE-1EB313EF8ECE -i windows/icon.ico -e loelauncher.exe -l \
+		wininst "install-loe.msi"
+	# rm -rf wininst
+
 appimage:
 	rm -rf $(APPDIR)
 	mkdir -p $(APPDIR)
@@ -75,18 +88,6 @@ appimage:
 	deps/appimagetool.AppImage $(APPDIR) -v LoE.AppImage
 	mv LoE.AppImage "Legends of Equestria.AppImage"
 
-windowsinstaller:
-	rm -rf wininst
-	mkdir -p wininst
-	cp loelauncher.exe wininst/
-	cp -r assets wininst/
-	cp -r windows/*.dll wininst/
-	$(MINGW)-strip -x wininst/*.dll*
-	rm -f install-loe.msi
-	msi-packager -n "Legends of Equestria" -v "1.0.0" -m "Legends of Equestria" -a x64 \
-		-u 4A00EFB3-F9D9-497E-B0FE-1EB313EF8ECE -i windows/icon.ico -e loelauncher.exe -l \
-		wininst "install-loe.msi"
-	rm -rf wininst
 
 $(MACOSAPP):
 	mkdir -p "Legends of Equestria.app"

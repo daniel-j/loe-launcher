@@ -53,8 +53,12 @@
 #define PATH_SEPARATOR_STRING "/"
 #elif defined(_WIN32)
 #define NTDDI_VERSION NTDDI_VISTA
+#include <locale>
+#include <codecvt>
+#include <comdef.h>
 #include <shlobj.h>
 #include <knownfolders.h>
+#include <comutil.h>
 /* MAX_PATH is defined by the Windows API */
 #define PATH_SEPARATOR_CHAR '\\'
 #define PATH_SEPARATOR_STRING "\\"
@@ -160,7 +164,8 @@ static inline void get_user_config_folder(char *out, unsigned int maxlen, const 
 	}
 	_bstr_t bstrPath(wszPath);
 	std::wstring wpath((wchar_t*)bstrPath);
-	std::string str = std::wstring_convert<std::codecvt_utf8<wchar_t>>().from_bytes(wpath);
+	std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
+	std::string str = converter.to_bytes(wpath);
 	CoTaskMemFree(wszPath);
 	strcpy(out, str.c_str());
 	/* We don't try to create the AppData folder as it always exists already */
