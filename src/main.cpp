@@ -8,10 +8,12 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include <aria2/aria2.h>
-#include "tinyfiledialogs.h"
+#include "lib/tinyfiledialogs.hpp"
+#include "lib/cfgpath.hpp"
 
 #define WINDOW_WIDTH 640
 #define WINDOW_HEIGHT 360
+#define APP_NAME "loelauncher"
 
 //namespace fs = std::experimental::filesystem;
 
@@ -19,6 +21,7 @@ SDL_mutex* arialock;
 aria2::Session* session;
 float progress = 0.0;
 bool stoparia = false;
+char configpath[MAX_PATH];
 
 int downloadEventCallback(aria2::Session* session, aria2::DownloadEvent event, aria2::A2Gid gid, void* userData) {
   switch (event) {
@@ -228,6 +231,10 @@ public:
 };
 
 int main(int argc, char** argv) {
+
+  get_user_config_folder(configpath, MAX_PATH, APP_NAME);
+
+  printf("Config directory: %s\n", configpath);
 
   SDL_Init(SDL_INIT_VIDEO);
   IMG_Init(IMG_INIT_PNG);

@@ -3,7 +3,7 @@ TARGET = loelauncher
 export PATH := prefix/bin:$(PATH)
 
 LFLAGS +=
-CFLAGS += -g -Wall -O2 -std=c++11
+CFLAGS += -g -Wall -O2 -std=c++14
 SOURCE += src
 
 PLATFORM := $(shell uname -s)
@@ -32,9 +32,10 @@ endif
 default: $(TARGET)
 all: default
 
-OBJECTS = $(patsubst %.cpp, %.o, $(wildcard $(SOURCE)/*.cpp))
-OBJECTSWIN = $(patsubst %.cpp, %.owin, $(wildcard $(SOURCE)/*.cpp))
-HEADERS = $(wildcard $(SOURCE)/*.h)
+SOURCES := $(shell find $(SOURCE) -name '*.cpp')
+OBJECTS := $(patsubst %.cpp, %.o, $(SOURCES))
+OBJECTSWIN := $(patsubst %.cpp, %.owin, $(SOURCES))
+HEADERS := $(shell find $(SOURCE) -name '*.hpp')
 
 %.o: %.cpp $(HEADERS)
 	$(CXX) $(CFLAGS) $(INCLUDES) -c $< -o $@
