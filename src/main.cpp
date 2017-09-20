@@ -4,6 +4,7 @@
 #endif
 
 #include <iostream>
+#include <fstream>
 #include <chrono>
 
 //#include <experimental/filesystem>
@@ -13,6 +14,7 @@
 #include <aria2/aria2.h>
 #include "lib/tinyfiledialogs.hpp"
 #include "lib/cfgpath.hpp"
+#include "lib/json.hpp"
 
 #define WINDOW_WIDTH 640
 #define WINDOW_HEIGHT 360
@@ -23,11 +25,21 @@
 
 //namespace fs = std::experimental::filesystem;
 
+using json = nlohmann::json;
+
 SDL_mutex* arialock;
 aria2::Session* session;
 float progress = 0.0;
 bool stoparia = false;
 char configpath[MAX_PATH];
+std::string configfile;
+json config;
+
+void saveConfig() {
+  std::cout << "Saving config to " << configfile << std::endl << config.dump(2) << std::endl;
+  std::ofstream f(configfile);
+  f << config.dump(2) << std::endl;
+}
 
 int downloadEventCallback(aria2::Session* session, aria2::DownloadEvent event, aria2::A2Gid gid, void* userData) {
   switch (event) {
@@ -83,12 +95,15 @@ int AriaThread(void *data) {
   // Add download item to session
 
   aria2::KeyVals options;
+  std::cout << "Adding torrent " << (char*)data << std::endl;
   rv = aria2::addTorrent(session, nullptr, (char*)data, options);
-  if (rv < 0) {
+  std::cout << "smth" << std::endl;
+  if (rv != 0) {
     SDL_UnlockMutex(arialock);
     std::cerr << "Failed to add torrent " << (char*)data << std::endl;
     return 1;
   }
+  std::cout << "Torrent added!" << std::endl;
   SDL_UnlockMutex(arialock);
 
   auto start = std::chrono::steady_clock::now();
@@ -242,6 +257,17 @@ int main(int argc, char** argv) {
 
   printf("Config directory: %s\n", configpath);
 
+  configfile = std::string(configpath) + "config.json";
+  std::cout << "Config file: " << configfile << std::endl;
+
+  // Default config
+  config["game_dir"] = configpath;
+
+  try {
+    std::ifstream f(configfile);
+    f >> config;
+  } catch (void*) {}
+
   SDL_Init(SDL_INIT_VIDEO);
   IMG_Init(IMG_INIT_PNG);
 
@@ -319,9 +345,11 @@ int main(int argc, char** argv) {
           } else {
               fprintf(stderr, "Error: %s\n", NFD_GetError() );
           }*/
-          const char* path = tinyfd_selectFolderDialog("Select a file", nullptr);
+          const char* path = tinyfd_selectFolderDialog("Select a file", config["game_dir"].get<std::string>().c_str());
           if (path != nullptr) {
             printf("selected path: %s\n", path);
+            config["game_dir"] = std::string(path);
+            saveConfig();
           } else {
             printf("no path!\n");
           }
@@ -360,8 +388,6 @@ int main(int argc, char** argv) {
       SDL_SetRenderDrawColor(renderer, 237, 60, 149, 255);
       SDL_RenderFillRect(renderer, &progressbar);
     }
-
-    
 
     SDL_RenderPresent(renderer);
   }
