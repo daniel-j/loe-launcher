@@ -152,10 +152,17 @@ static inline void get_user_config_folder(char *out, unsigned int maxlen, const 
 		out[0] = 0;
 		return;
 	}
-	if (!SUCCEEDED(SHGetKnownFolderPath(FOLDERID_LocalAppData, KF_FLAG_CREATE, nullptr, (WCHAR**)&out))) {
+	// TODO: Fix this
+	LPWSTR wszPath = NULL;
+	if (!SUCCEEDED(SHGetKnownFolderPath(FOLDERID_LocalAppData, KF_FLAG_CREATE, nullptr, &wszPath))) {
 		out[0] = 0;
 		return;
 	}
+	_bstr_t bstrPath(wszPath);
+	std::wstring wpath((wchar_t*)bstrPath);
+	std::string str = std::wstring_convert<std::codecvt_utf8<wchar_t>>().from_bytes(wpath);
+	CoTaskMemFree(wszPath);
+	strcpy(out, str.c_str());
 	/* We don't try to create the AppData folder as it always exists already */
 	unsigned int appname_len = strlen(appname);
 	if (strlen(out) + 1 + appname_len + 1 + 1 > maxlen) {
