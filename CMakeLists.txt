@@ -7,6 +7,13 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_BINARY_DIR)
     message(FATAL_ERROR "Building in the source directory is not supported, try building in a 'build' directory.")
 endif()
 
+SET(CMAKE_C_COMPILER clang)
+SET(CMAKE_CXX_COMPILER clang++)
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -stdlib=libc++")
+SET(CMAKE_SKIP_RPATH TRUE)
+
+MESSAGE(STATUS ${CMAKE_CXX_FLAGS})
+
 set(CMAKE_PREFIX_PATH "${CMAKE_SOURCE_DIR}/prefix")
 
 file(GLOB_RECURSE sources
@@ -36,15 +43,17 @@ target_link_libraries(
     ${ARIA2_LIBRARY}
 )
 
+install(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_SOURCE_DIR})
+
 # C++ Linting. Produces warnings but doesn't prevent compiling
 # https://github.com/google/styleguide/tree/gh-pages/cpplint
 find_program(CPPLINT cpplint)
 if(CPPLINT)
-    file(GLOB_RECURSE srcs
-        ${sources}
+    file(GLOB srcs
+        ${CMAKE_SOURCE_DIR}/src/*.cpp
         ${CMAKE_SOURCE_DIR}/src/*.hpp
     )
-    add_custom_target(GoogleStyle ALL
+    add_custom_target(lint ALL
         cpplint
         --output=eclipse
         --filter=-legal/copyright,-build/include,-build/header_guard

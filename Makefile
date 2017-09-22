@@ -35,7 +35,6 @@ endif
 
 .PHONY: default all clean appimage windows windowsinstaller macosapp macosinstaller
 
-default: $(TARGET)
 all: default
 
 SOURCES := $(shell find $(SOURCE) -name '*.cpp')
@@ -43,16 +42,21 @@ OBJECTS := $(patsubst %.cpp, %.o, $(SOURCES))
 OBJECTSWIN := $(patsubst %.cpp, %.owin, $(SOURCES))
 HEADERS := $(shell find $(SOURCE) -name '*.hpp')
 
-%.o: %.cpp $(HEADERS)
-	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
+# %.o: %.cpp $(HEADERS)
+# 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
 
 %.owin: %.cpp $(HEADERS)
 	$(CXXWIN) $(CXXWINFLAGS) $(INCLUDESWIN) -c $< -o $@
 
 .PRECIOUS: $(TARGET) $(OBJECTS) $(OBJECTSWIN)
 
-$(TARGET): $(OBJECTS) Makefile
-	$(CXX) $(CXXFLAGS) $(INCLUDES) -o $@ $(OBJECTS) $(LFLAGS) $(LIBS)
+# $(TARGET): $(OBJECTS) Makefile
+# 	$(CXX) $(CXXFLAGS) $(INCLUDES) -o $@ $(OBJECTS) $(LFLAGS) $(LIBS)
+
+default:
+	@mkdir -p build
+	@cd build && cmake .. && make -s
+	@cp build/loelauncher $(TARGET)
 
 windows/icon.ico: assets/icon.png
 	convert assets/icon.png windows/icon.ico
@@ -135,8 +139,12 @@ macosapp: $(MACOSAPP) $(MACOSAPP)/Contents/Info.plist $(MACOSAPP)/Contents/MacOS
 macosinstaller:
 	@macos/createdmg.sh "$(MACOSAPP)" "$(DMGVOLNAME)"
 
+lint:
+	@mkdir -p build
+	@cd build && cmake .. && make -s lint
 
 clean:
-	-rm -f $(SOURCE)/*.o $(SOURCE)/*.owin
-	-rm -f $(TARGET) $(TARGET).exe "install-loe.msi" "windows/exe.res" "windows/icon.ico"
+	-rm -f $(TARGET) $(SOURCE)/*.o $(SOURCE)/*.owin
+	-rm -rf build/
+	-rm -f $(TARGET).exe "install-loe.msi" "windows/exe.res" "windows/icon.ico"
 	-rm -rf "$(MACOSAPP)" "Legends of Equestria.app" "LoE.dmg"

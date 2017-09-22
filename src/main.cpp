@@ -7,7 +7,7 @@
 #include <fstream>
 #include <chrono>
 
-//#include <experimental/filesystem>
+// #include <experimental/filesystem>
 #include <algorithm>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
@@ -23,7 +23,7 @@
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 
-//namespace fs = std::experimental::filesystem;
+// namespace fs = std::experimental::filesystem;
 
 using json = nlohmann::json;
 
@@ -31,6 +31,7 @@ SDL_mutex* arialock;
 aria2::Session* session;
 float progress = 0.0;
 bool stoparia = false;
+
 char configpath[MAX_PATH];
 char default_gamedir[MAX_PATH];
 std::string configfile;
@@ -42,7 +43,8 @@ void saveConfig() {
   f << config.dump(2) << std::endl;
 }
 
-int downloadEventCallback(aria2::Session* session, aria2::DownloadEvent event, aria2::A2Gid gid, void* userData) {
+int downloadEventCallback(aria2::Session* session, aria2::DownloadEvent event,
+                          aria2::A2Gid gid, void* userData) {
   switch (event) {
   case aria2::EVENT_ON_DOWNLOAD_COMPLETE:
     std::cerr << "COMPLETE";
@@ -64,8 +66,7 @@ int downloadEventCallback(aria2::Session* session, aria2::DownloadEvent event, a
       if (!f.uris.empty()) {
         std::cerr << f.uris[0].uri;
       }
-    }
-    else {
+    } else {
       std::cerr << f.path;
     }
   }
@@ -75,6 +76,7 @@ int downloadEventCallback(aria2::Session* session, aria2::DownloadEvent event, a
 }
 
 int AriaThread(void *data) {
+  return 0;
   int rv;
 
   SDL_LockMutex(arialock);
@@ -92,16 +94,16 @@ int AriaThread(void *data) {
   opts.push_back(aria2::KeyVals::value_type("bt-tracker-interval", "10"));
   opts.push_back(aria2::KeyVals::value_type("dir", "dl"));
   session = aria2::sessionNew(opts, config);
-  
+
   // Add download item to session
 
   aria2::KeyVals options;
-  std::cout << "Adding torrent " << (char*)data << std::endl;
-  rv = aria2::addTorrent(session, nullptr, (char*)data, options);
+  std::cout << "Adding torrent " << reinterpret_cast<char*>(data) << std::endl;
+  rv = aria2::addTorrent(session, nullptr, reinterpret_cast<char*>(data), options);
   std::cout << "smth" << std::endl;
   if (rv != 0) {
     SDL_UnlockMutex(arialock);
-    std::cerr << "Failed to add torrent " << (char*)data << std::endl;
+    std::cerr << "Failed to add torrent " << reinterpret_cast<char*>(data) << std::endl;
     return 1;
   }
   std::cout << "Torrent added!" << std::endl;
@@ -133,8 +135,7 @@ int AriaThread(void *data) {
     }
 
     auto now = std::chrono::steady_clock::now();
-    auto count =
-        std::chrono::duration_cast<std::chrono::milliseconds>(now - start).count();
+    auto count = std::chrono::duration_cast<std::chrono::milliseconds>(now - start).count();
     aria2::GlobalStat gstat = aria2::getGlobalStat(session);
     // std::vector<aria2::A2Gid> gids = aria2::getActiveDownload(session);
 
@@ -145,7 +146,7 @@ int AriaThread(void *data) {
                 << " #waiting:" << gstat.numWaiting
                 << " D:" << gstat.downloadSpeed / 1024 << "KiB/s"
                 << " U:" << gstat.uploadSpeed / 1024 << "KiB/s " << std::endl;
-      
+
       for (const auto& gid : gids) {
         aria2::DownloadHandle* dh = aria2::getDownloadHandle(session, gid);
         if (dh) {
@@ -163,7 +164,7 @@ int AriaThread(void *data) {
         }
       }
     }
-    
+
     SDL_UnlockMutex(arialock);
   }
 
@@ -177,17 +178,18 @@ int AriaThread(void *data) {
 }
 
 class Button {
-private:
+ private:
   SDL_Rect src;
   SDL_Renderer* r;
   bool hovering = false;
   bool isclicking = false;
-public:
+
+ public:
   static SDL_Texture* texture;
   SDL_Rect position;
   bool disabled = false;
 
-  Button(SDL_Renderer* renderer, int x = 0, int y = 0) {
+  explicit Button(SDL_Renderer* renderer, int x = 0, int y = 0) {
     r = renderer;
     src.x = 0;
     src.y = 0;
@@ -205,7 +207,8 @@ public:
     SDL_RenderCopy(r, Button::texture, &src, &position);
   }
   bool update(int x, int y, Uint32 type) {
-    hovering = (x >= position.x && x < position.x + position.w) && (y >= position.y && y < position.y + position.h);
+    hovering = (x >= position.x && x < position.x + position.w) &&
+               (y >= position.y && y < position.y + position.h);
     if (type == SDL_MOUSEBUTTONDOWN && hovering) {
       isclicking = true;
     } else if (type == SDL_MOUSEMOTION && !hovering) {
@@ -220,11 +223,12 @@ public:
 SDL_Texture* Button::texture = nullptr;
 
 class Image {
-private:
+ private:
   SDL_Rect dst;
   SDL_Renderer* r;
   SDL_Texture* texture = nullptr;
-public:
+
+ public:
   int width = 0;
   int height = 0;
   Image(SDL_Renderer* renderer, const char* imagepath) {
@@ -240,10 +244,10 @@ public:
     SDL_DestroyTexture(texture);
   }
   void render(int x, int y, float scale = 1.0, float alpha = 1.0) {
-    dst.x = x;// - (width * scale - width) / 2.0;
-    dst.y = y;// - (height * scale - height) / 2.0;
-    dst.w = width;// * scale;
-    dst.h = height;// * scale;
+    dst.x = x;  // - (width * scale - width) / 2.0;
+    dst.y = y;  // - (height * scale - height) / 2.0;
+    dst.w = width;  // * scale;
+    dst.h = height;  // * scale;
     // printf("%dx%d %dx%d with scale %f to %dx%d\n", x, y, width, height, scale, dst.x, dst.y);
     SDL_RenderSetScale(r, scale, scale);
     SDL_SetTextureAlphaMod(texture, 255 * alpha);
@@ -253,7 +257,6 @@ public:
 };
 
 int main(int argc, char** argv) {
-
   get_user_config_folder(configpath, MAX_PATH, APP_NAME);
   get_user_data_folder(default_gamedir, MAX_PATH, "LoE");
 
@@ -285,8 +288,7 @@ int main(int argc, char** argv) {
     SDL_WINDOWPOS_CENTERED,           // initial y position
     WINDOW_WIDTH,                     // width, in pixels
     WINDOW_HEIGHT,                    // height, in pixels
-    SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_SHOWN
-  );
+    SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_SHOWN);
 
   SDL_Surface* icon = IMG_Load("assets/icon.png");
   SDL_SetWindowIcon(window, icon);
@@ -295,8 +297,7 @@ int main(int argc, char** argv) {
   SDL_Renderer* renderer = SDL_CreateRenderer(
     window,
     -1,
-    SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC
-  );
+    SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
   SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
   SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "best");
 
@@ -327,20 +328,25 @@ int main(int argc, char** argv) {
   SDL_RenderPresent(renderer);
 
   arialock = SDL_CreateMutex();
-  SDL_Thread* thread = SDL_CreateThread(AriaThread, "AriaThread", (void*)"loe.torrent");
+  SDL_Thread* thread = SDL_CreateThread(
+    AriaThread,
+    "AriaThread",
+    const_cast<void*>(reinterpret_cast<const void*>("loe.torrent")));
 
   bool isrunning = true;
 
   while (isrunning) {
     SDL_Event e;
-    //Get mouse position
+    // Get mouse position
     int mousex, mousey;
     SDL_GetMouseState(&mousex, &mousey);
     while (SDL_PollEvent(&e)) {
       if (e.type == SDL_QUIT) {
         isrunning = false;
         break;
-      } else if (e.type == SDL_MOUSEMOTION || e.type == SDL_MOUSEBUTTONDOWN || e.type == SDL_MOUSEBUTTONUP) {
+      } else if (e.type == SDL_MOUSEMOTION ||
+                 e.type == SDL_MOUSEBUTTONDOWN ||
+                 e.type == SDL_MOUSEBUTTONUP) {
         if (button.update(mousex, mousey, e.type)) {
           printf("Clicked button!\n");
           /*nfdchar_t* outPath = nullptr;
@@ -353,8 +359,11 @@ int main(int argc, char** argv) {
           } else {
               fprintf(stderr, "Error: %s\n", NFD_GetError() );
           }*/
-          const char* path = tinyfd_selectFolderDialog("Select a file", config["game_dir"].get<std::string>().c_str());
-          if (path != nullptr) {
+          const char* path = tinyfd_selectFolderDialog(
+            "Select a file",
+            config["game_dir"].get<std::string>().c_str());
+
+          if (path) {
             printf("selected path: %s\n", path);
             config["game_dir"] = std::string(path);
             saveConfig();
@@ -373,12 +382,11 @@ int main(int argc, char** argv) {
     SDL_RenderClear(renderer);
     bgimage.render(
       WINDOW_WIDTH / 2 - bgimage.width / 4 - mousex / 40 + WINDOW_WIDTH / 80,
-      WINDOW_HEIGHT / 2 - bgimage.height / 3 - mousey / 40 + WINDOW_HEIGHT / 80, 
+      WINDOW_HEIGHT / 2 - bgimage.height / 3 - mousey / 40 + WINDOW_HEIGHT / 80,
       0.5,
-      MIN(1.0, t / 2000.0)
-    );
+      MIN(1.0, t / 2000.0));
     logo.render(10, 10, 0.7, MIN(0.8, t / 1000.0) + 0.2);
-    
+
     button.render();
 
     if (progress > 0) {
