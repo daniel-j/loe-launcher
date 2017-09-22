@@ -11,10 +11,11 @@ $MACOS && deps+=('dylibbundler,https://github.com/auriamg/macdylibbundler/archiv
 deps+=('SDL2,https://www.libsdl.org/release/SDL2-2.0.5.tar.gz')
 deps+=('SDL2_image,https://www.libsdl.org/projects/SDL_image/release/SDL2_image-2.0.1.tar.gz')
 deps+=('aria2,https://github.com/aria2/aria2/releases/download/release-1.32.0/aria2-1.32.0.tar.xz')
-# deps+=('zlib,https://zlib.net/zlib-1.2.11.tar.gz')
+[ "$CROSSWIN" == "false" ] && deps+=('zlib,https://zlib.net/zlib-1.2.11.tar.gz')
 # deps+=('freetype,http://download.savannah.gnu.org/releases/freetype/freetype-2.7.1.tar.gz')
-deps+=('libpng,https://sourceforge.net/projects/libpng/files/libpng16/1.6.32/libpng-1.6.32.tar.xz/download')
+[ "$CROSSWIN" == "false" ] && deps+=('libpng,https://sourceforge.net/projects/libpng/files/libpng16/1.6.32/libpng-1.6.32.tar.xz/download')
 # deps+=('c-ares,https://c-ares.haxx.se/download/c-ares-1.13.0.tar.gz') # used by aria2
+[ "$CROSSWIN" == "false" ] && deps+=('openssl,https://www.openssl.org/source/openssl-1.1.0f.tar.gz')
 rm -rf deps
 mkdir -p deps
 

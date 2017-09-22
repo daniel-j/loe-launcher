@@ -5822,7 +5822,7 @@ frontmost of process \\\"Python\\\" to true' ''');");
 	else
 	{
 		if (aTitle&&!strcmp(aTitle,"tinyfd_query")){return tinyfd_inputBox(aTitle,NULL,NULL);}
-		p = tinyfd_inputBox(aTitle, "Select folder","");
+		p = tinyfd_inputBox(aTitle, "Select folder",aDefaultPath);
 		if ( !p || ! strlen( p ) || ! dirExists( p ) )
 		{
 			return NULL ;
