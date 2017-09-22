@@ -68,13 +68,20 @@
 # message("<FindSDL2.cmake>")
 
 SET(SDL2_SEARCH_PATHS
-	prefix
+	~/Library/Frameworks
+	/Library/Frameworks
+	/usr/local
+	/usr
+	/sw # Fink
+	/opt/local # DarwinPorts
+	/opt/csw # Blastwave
+	/opt
+	${SDL2_PATH}
 )
 
 FIND_PATH(SDL2_INCLUDE_DIR SDL.h
 	HINTS
 	$ENV{SDL2DIR}
-	ENV PREFIX
 	PATH_SUFFIXES include/SDL2 include
 	PATHS ${SDL2_SEARCH_PATHS}
 )

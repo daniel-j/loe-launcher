@@ -42,15 +42,10 @@
 # (To distribute this file outside of CMake, substitute the full
 #  License text for the above reference.)
 
-set(SDL2_IMAGE_PATH
-    prefix
-)
-
 find_path(SDL2_IMAGE_INCLUDE_DIR SDL_image.h
         HINTS
         ENV SDL2IMAGEDIR
         ENV SDL2DIR
-        ENV PREFIX
         PATH_SUFFIXES SDL2
         # path suffixes to search inside ENV{SDLDIR}
         include/SDL2 include

@@ -1,7 +1,4 @@
 
-set(ARIA2_PATH
-    prefix
-)
 
 find_path(ARIA2_INCLUDE_DIR aria2.h
         HINTS

@@ -7,6 +7,8 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_BINARY_DIR)
     message(FATAL_ERROR "Building in the source directory is not supported, try building in a 'build' directory.")
 endif()
 
+set(CMAKE_PREFIX_PATH "${CMAKE_SOURCE_DIR}/prefix")
+
 file(GLOB_RECURSE sources
     ${CMAKE_SOURCE_DIR}/src/*.cpp
 )
@@ -17,16 +19,15 @@ add_executable(${PROJECT_NAME}
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
 
+include_directories(
+    prefix/include
+)
+
 find_package(SDL2 REQUIRED)
 find_package(SDL2_image REQUIRED)
 # find_package(SDL2_ttf REQUIRED)
 find_package(aria2 REQUIRED)
 
-include_directories(
-    prefix/include
-)
-
-MESSAGE( STATUS "Aria2: " ${ARIA2_LIBRARY} )
 target_link_libraries(
     ${PROJECT_NAME}
     ${SDL2_LIBRARY}
