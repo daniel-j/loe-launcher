@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 
-platform="win64"
-gamedir="./loe"
+set -e
+
+platform="Linux"
+gamedir="./dl"
 zsync="/home/djazz/Downloads/AppImage-zsync-curl/src/zsync_curl"
 mkdir -p "$gamedir"
 
@@ -16,8 +18,6 @@ IFS=$'\n' relativeContentUrls=(`echo "$index" | jq -r '.Content[].RelativeConten
 IFS=$'\n' fileHashes=(`echo "$index" | jq -r '.Content[].FileHash'`)
 IFS=$'\n' installPaths=(`echo "$index" | jq -r '.Content[]._installPath'`)
 
-#curl -ivL "${baseurl}loe/${relativeContentUrls[0]}"
-
 for i in "${!relativeContentUrls[@]}"; do
 	url="${baseurl}loe/${relativeContentUrls[$i]}"
 	filehash="${fileHashes[$i]}"
@@ -25,6 +25,13 @@ for i in "${!relativeContentUrls[@]}"; do
 	echo $url $path
 	echo zsync_curl -o "${path%.jar.zsync.jar}" "$url"
 	mkdir -p $(dirname "$gamedir/$path")
-	# currently does not handle gzip. Running again generates .zs-old files
-	(cd "$gamedir" && $zsync -o "${path%.jar.zsync.jar}" "$url")
+
+	if [ ! -f "$gamedir/${path%.jar.zsync.jar}.gz" ] && [ -f "$gamedir/${path%.jar.zsync.jar}" ]; then
+		echo "Compressing ${path%.jar.zsync.jar}..."
+		gzip -vf "$gamedir/${path%.jar.zsync.jar}"
+	fi
+	(cd "$gamedir" && $zsync -o "${path%.jar.zsync.jar}.gz" "$url")
+	echo "Extracting ${path%.jar.zsync.jar}..."
+	gzip -dvf "$gamedir/${path%.jar.zsync.jar}.gz"
+	rm -fv "$gamedir/${path%.jar.zsync.jar}.gz.zs-old"
 done
