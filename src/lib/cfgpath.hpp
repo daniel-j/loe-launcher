@@ -375,6 +375,13 @@ static inline void get_user_cache_folder(char *out, unsigned int maxlen, const c
 #elif defined(_WIN32) || defined(__APPLE__)
 	/* No distinction under Windows or OS X */
 	get_user_config_folder(out, maxlen, appname);
+	strcat(out, "cache");
+	#ifdef _WIN32
+		mkdir(out);
+	#else
+		mkdir(out, 0755);
+	#endif
+	strcat(out, PATH_SEPARATOR_STRING);
 #endif
 }
 
