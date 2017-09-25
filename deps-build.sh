@@ -104,7 +104,9 @@ cd build
 	--enable-alsa --enable-pulseaudio-shared \
 	--enable-video-wayland --enable-wayland-shared \
 	--enable-x11-shared --enable-ibus --enable-fcitx --enable-ime \
-	--disable-rpath --disable-input-tslib
+	--disable-rpath --disable-input-tslib --disable-audio --disable-atomic \
+	--disable-haptic --disable-joystick --disable-power --disable-threads \
+	--disable-file --disable-loadso --disable-cpuinfo
 make $makearg
 make install
 make distclean
