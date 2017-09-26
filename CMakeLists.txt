@@ -12,7 +12,7 @@ SET(CMAKE_CXX_COMPILER clang++)
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -stdlib=libc++")
 SET(CMAKE_SKIP_RPATH TRUE)
 
-set(CMAKE_PREFIX_PATH "${CMAKE_SOURCE_DIR}/prefix")
+#set(CMAKE_PREFIX_PATH "${CMAKE_SOURCE_DIR}/prefix")
 
 file(GLOB_RECURSE sources
     ${CMAKE_SOURCE_DIR}/src/*.cpp
@@ -25,7 +25,7 @@ add_executable(${PROJECT_NAME}
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
 
 include_directories(
-    prefix/include
+    ${CMAKE_PREFIX_PATH}/include
 )
 
 find_package(SDL2 REQUIRED)

@@ -19,7 +19,7 @@ export CXX="clang++"
 export CFLAGS=""
 export CXXFLAGS="-g -O2 -stdlib=libc++"
 export LDFLAGS=""
-export HOST="x86_64-pc-linux-gnu"
+$LINUX && export HOST="x86_64-pc-linux-gnu"
 
 $LINUX && [ "$CROSSWIN" == "false" ] && export CC="$CC -U_FORTIFY_SOURCE -include $PREFIX/libcwrap.h"
 $LINUX && [ "$CROSSWIN" == "false" ] && export CXX="$CXX -U_FORTIFY_SOURCE -D_GLIBCXX_USE_CXX11_ABI=0 -include $PREFIX/libcwrap.h"
@@ -28,7 +28,7 @@ $CROSSWIN && MINGW="x86_64-w64-mingw32"
 $CROSSWIN && export CXXFLAGS=""
 
 if [ "$ARCH" != "x86_64" ]; then
-	export HOST="i686-pc-linux-gnu"
+	$LINUX && export HOST="i686-pc-linux-gnu"
 	export CFLAGS="-m32 $CFLAGS"
 	export LDFLAGS="-m32 $LDFLAGS"
 	export CXXFLAGS="-m32 $CXXFLAGS"
@@ -50,7 +50,7 @@ $MACOS && makearg="-j$(sysctl -n hw.ncpu)" || makearg="-j$(nproc)"
 
 clean_prefix() {
 	rm -rf "$PREFIX"
-	mkdir -pv "$PREFIX"
+	mkdir -pv $PREFIX/{bin,include,lib}
 }
 
 build_libcwrap() {
@@ -92,7 +92,7 @@ build_libpng() {
 	echo "Building libpng"
 	cd "$SRC/libpng"
 	./configure --prefix="$PREFIX" --host="$HOST" PKG_CONFIG_PATH="$PKG_CONFIG_PATH" CC="$CC" CXX="$CXX" LDFLAGS="$LDFLAGS" CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS"
-	make $makearg
+	make
 	make install
 	make distclean
 }

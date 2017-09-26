@@ -2,31 +2,35 @@ TARGET = loelauncher
 
 CXX = clang++
 
-export PATH := prefix/bin:prefix-win/bin:$(PATH)
-
 CXXFLAGS += -g -Wall -O2 -std=c++11 -stdlib=libc++
 SOURCE += src
+
+# Todo: Switchable architecture
+ARCH := x86_64
+PREFIX = prefix-$(ARCH)
+PREFIXWIN = $(PREFIX)-win
+export PATH := $(PREFIX)/bin:$(PREFIXWIN)/bin:$(PATH)
 
 PLATFORM := $(shell uname -s)
 # Linux
 ifeq ($(PLATFORM),Linux)
-    CXX := $(CXX) -U_FORTIFY_SOURCE -D_GLIBCXX_USE_CXX11_ABI=0 -include "prefix/libcwrap.h"
-    LDFLAGS += -static-libgcc -static-libstdc++
-    LIBS += -lc++ -lc++abi -Lprefix/lib -laria2 -lSDL2 -lSDL2_image
-    INCLUDES += -Iprefix/include
+    #CXX := $(CXX) -U_FORTIFY_SOURCE -D_GLIBCXX_USE_CXX11_ABI=0 -include "$(PREFIX)/libcwrap.h"
+    #LDFLAGS += -static-libgcc -static-libstdc++
+    #LIBS += -lc++ -lc++abi -L$(PREFIX)/lib -laria2 -lSDL2 -lSDL2_image
+    #INCLUDES += -I$(PREFIX)/include
 
     MINGW = x86_64-w64-mingw32
-    LIBSWIN += -lmingw32 -lSDL2main -mwindows -lole32 -loleaut32 -lcomdlg32 -luuid -Lprefix-win/lib -laria2 -lSDL2 -lSDL2_image
-    INCLUDESWIN += -Iprefix-win/include
+    LIBSWIN += -lmingw32 -lSDL2main -mwindows -lole32 -loleaut32 -lcomdlg32 -luuid -L$(PREFIXWIN)/lib -laria2 -lSDL2 -lSDL2_image
+    INCLUDESWIN += -I$(PREFIXWIN)/include
     CXXWIN = $(MINGW)-g++
     CXXWINFLAGS += -g -Wall -O2 -std=c++11
     APPDIR = LoE.AppDir
 endif
 # macOS
 ifeq ($(PLATFORM),Darwin)
-    LDFLAGS = -static-libstdc++
-    LIBS += -Lprefix/lib -laria2 -lSDL2 -lSDL2_image
-    INCLUDES += -Iprefix/include
+    #LDFLAGS = -static-libstdc++
+    #LIBS += -L$(PREFIX)/lib -laria2 -lSDL2 -lSDL2_image
+    #INCLUDES += -I$(PREFIX)/include
 
     DMGVOLNAME = Legends of Equestria installer
     # Workaround because make doesn't like spaces in target filenames
@@ -55,7 +59,9 @@ HEADERS := $(shell find $(SOURCE) -name '*.hpp')
 
 default:
 	@mkdir -p build
-	@cd build && cmake .. && make -s
+	@cd build && cmake \
+		-DCMAKE_PREFIX_PATH="$(PREFIX)" \
+		.. && make -s
 	@cp build/loelauncher $(TARGET)
 
 windows/icon.ico: assets/icon.png
@@ -76,7 +82,7 @@ windowsinstaller:
 	cp /usr/$(MINGW)/bin/libpng16-16.dll wininst/
 	cp /usr/$(MINGW)/bin/libgcc_s_seh-1.dll wininst/
 	cp /usr/$(MINGW)/bin/libstdc++-6.dll wininst/
-	cp prefix-win/bin/*.dll* wininst/
+	cp $(PREFIXWIN)/bin/*.dll* wininst/
 	$(MINGW)-strip -x wininst/*.dll* || true
 	rm -f loe-install-x86_64.msi
 	msi-packager -n "Legends of Equestria" -v "1.0.0" -m "Legends of Equestria" -a x64 \
@@ -90,7 +96,7 @@ appimage:
 	cp loelauncher $(APPDIR)/
 	cp -r assets $(APPDIR)/
 	mkdir -p $(APPDIR)/libs
-	LD_LIBRARY_PATH=prefix/lib ./linux/findlibs.sh ./loelauncher $(APPDIR)/libs
+	LD_LIBRARY_PATH=$(PREFIX)/lib ./linux/findlibs.sh ./loelauncher $(APPDIR)/libs
 	cp linux/AppRun $(APPDIR)/
 	cp linux/loe.desktop $(APPDIR)/
 	ln -s assets/icon.png $(APPDIR)/.DirIcon
