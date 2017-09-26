@@ -1,9 +1,6 @@
 
 #include "aria2.hpp"
 
-/*
-std::mutex ariamutex;
-
 template <typename T> std::string abbrevsize(T size) {
   if (size >= 1024 * 1024 * 1024) {
     return std::to_string(size / 1024 / 1024 / 1024) + "G";
@@ -18,51 +15,6 @@ template <typename T> std::string abbrevsize(T size) {
     return std::to_string(size);
   }
 }
-
-int downloadEventCallback(aria2::Session* session, aria2::DownloadEvent event,
-                          aria2::A2Gid gid, void* userData) {
-  auto notifyq = static_cast<NotifyQueue*>(userData);
-  auto ev = new DownloadEvent;
-  ev->event = std::move(event);
-  ev->gid = std::move(gid);
-  // notifyq->push(std::unique_ptr<Notification>(new Notification(DownloadEventNotification, ev)));
-
-  return 0;
-
-
-  switch (event) {
-    case aria2::EVENT_ON_DOWNLOAD_START:
-      std::cerr << "STARTED";
-      break;
-    case aria2::EVENT_ON_DOWNLOAD_COMPLETE:
-      std::cerr << "COMPLETE";
-      break;
-    case aria2::EVENT_ON_DOWNLOAD_ERROR:
-      std::cerr << "ERROR";
-      break;
-    default:
-      return 0;
-  }
-  std::cerr << " [" << aria2::gidToHex(gid) << "] ";
-  aria2::DownloadHandle* dh = aria2::getDownloadHandle(session, gid);
-  if (!dh)
-    return 0;
-  if (dh->getNumFiles() > 0) {
-    aria2::FileData f = dh->getFile(1);
-    // Path may be empty if the file name has not been determined yet.
-    if (f.path.empty()) {
-      if (!f.uris.empty()) {
-        std::cerr << f.uris[0].uri;
-      }
-    } else {
-      std::cerr << f.path;
-    }
-  }
-  aria2::deleteDownloadHandle(dh);
-  std::cerr << std::endl;
-
-  return 0;
-}*/
 
 /*
 int ariaWorker(JobQueue& jobq, NotifyQueue& notifyq) {
@@ -146,16 +98,51 @@ void Downloader::begin() {
 
 int Downloader::downloadEventCallback(aria2::Session* session, aria2::DownloadEvent event,
                                       aria2::A2Gid gid, void* userData) {
-  auto self = (Downloader*)userData;
-  std::lock_guard<std::mutex> l(self->m_);
+  auto self = static_cast<Downloader*>(userData);
 
   auto cb = self->callbacks[gid];
 
   if (cb && event == aria2::EVENT_ON_DOWNLOAD_COMPLETE) {
-    cb(true);
+    self->notifyq.push([cb]() {cb(true);});
   } else if (cb && event == aria2::EVENT_ON_DOWNLOAD_ERROR) {
-    cb(false);
+    self->notifyq.push([cb]() {cb(false);});
   }
+
+  switch (event) {
+    case aria2::EVENT_ON_DOWNLOAD_START:
+      std::cerr << "STARTED";
+      break;
+    case aria2::EVENT_ON_DOWNLOAD_COMPLETE:
+      std::cerr << "COMPLETE";
+      break;
+    case aria2::EVENT_ON_DOWNLOAD_ERROR:
+      std::cerr << "ERROR";
+      break;
+    default:
+      std::cerr << "UNKNOWN";
+      break;
+  }
+
+  std::cerr << " [" << aria2::gidToHex(gid) << "] ";
+  aria2::DownloadHandle* dh = aria2::getDownloadHandle(session, gid);
+  if (!dh)
+    return 0;
+  if (event == aria2::EVENT_ON_DOWNLOAD_ERROR) {
+    std::cout << " CODE=" << dh->getErrorCode() << " ";
+  }
+  if (dh->getNumFiles() > 0) {
+    aria2::FileData f = dh->getFile(1);
+    // Path may be empty if the file name has not been determined yet.
+    if (f.path.empty()) {
+      if (!f.uris.empty()) {
+        std::cerr << f.uris[0].uri;
+      }
+    } else {
+      std::cerr << f.path;
+    }
+  }
+  aria2::deleteDownloadHandle(dh);
+  std::cerr << std::endl;
 
   return 0;
 }
@@ -164,10 +151,11 @@ void addUri(std::vector<std::string> uris, aria2::KeyVals& options, aria2::A2Gid
   std::cout << "hi from adduri!" << std::endl;
 }
 
-void Downloader::fetch(std::string uri, std::string filepath, FetchCallback callback) {
+void Downloader::fetch(std::string uri, std::string dir, std::string filename, FetchCallback callback) {
   std::vector<std::string> uris = {uri};
   aria2::KeyVals options;
-  options.push_back(std::make_pair("out", filepath));
+  options.push_back(std::make_pair("dir", dir));
+  options.push_back(std::make_pair("out", filename));
   // jobq.push(std::unique_ptr<Job>(new AddUriJob(std::move(uris), std::move(options), &gid, std::move(callback))));
   jobq.push([=]() {
     aria2::A2Gid gid;
@@ -176,11 +164,13 @@ void Downloader::fetch(std::string uri, std::string filepath, FetchCallback call
       std::cerr << "aria2: Failed to add uri " << uri << std::endl;
       callback(false);
       return;
-    } else {
-      callbacks[gid] = callback;
-      // callback(aria2::gidToHex(*gid));
-      std::cout << aria2::gidToHex(gid) << std::endl;
     }
+    auto dh = getDownloadHandle(session, gid);
+    std::cout << "File status: " << dh->getStatus() << std::endl;
+    aria2::deleteDownloadHandle(dh);
+    callbacks[gid] = callback;
+    // callback(aria2::gidToHex(*gid));
+    std::cout << aria2::gidToHex(gid) << std::endl;
   });
 }
 
@@ -189,7 +179,7 @@ void Downloader::threadFunc() {
 
   aria2::SessionConfig config;
   config.keepRunning = true;
-  config.userData = (void*)this;
+  config.userData = static_cast<void*>(this);
   config.downloadEventCallback = &Downloader::downloadEventCallback;
 
   aria2::KeyVals opts;
@@ -202,6 +192,7 @@ void Downloader::threadFunc() {
   opts.push_back(std::make_pair("follow-torrent", "mem"));
 
   session = aria2::sessionNew(opts, config);
+  auto start = std::chrono::steady_clock::now();
   for (;;) {
     if (!keepRunning) break;
     int rv = aria2::run(session, aria2::RUN_ONCE);
@@ -210,9 +201,43 @@ void Downloader::threadFunc() {
     }
     while (!jobq.empty()) {
       auto job = jobq.pop();
-      //job->execute(session, this);
       job();
+    }
+    auto now = std::chrono::steady_clock::now();
+    auto count = std::chrono::duration_cast<std::chrono::milliseconds>(now - start).count();
+
+    if (count >= 500) {
+      start = now;
+      std::vector<aria2::A2Gid> gids = aria2::getActiveDownload(session);
+      std::vector<DownloadStatus> v;
+      for (auto gid : gids) {
+        aria2::DownloadHandle* dh = aria2::getDownloadHandle(session, gid);
+        if (dh) {
+          DownloadStatus st;
+          st.gid = gid;
+          st.totalLength = dh->getTotalLength();
+          st.completedLength = dh->getCompletedLength();
+          st.downloadSpeed = dh->getDownloadSpeed();
+          st.uploadSpeed = dh->getUploadSpeed();
+          if (dh->getNumFiles() > 0) {
+            aria2::FileData file = dh->getFile(1);
+            st.filename = file.path;
+          }
+          v.push_back(std::move(st));
+          aria2::deleteDownloadHandle(dh);
+        }
+      }
+      for (auto& a : v) {
+        std::cout << "[" << aria2::gidToHex(a.gid) << "] "
+             << abbrevsize(a.completedLength) << "/"
+             << abbrevsize(a.totalLength) << "("
+             << (a.totalLength != 0 ? a.completedLength * 100 / a.totalLength : 0)
+             << "%)" << " D:" << abbrevsize(a.downloadSpeed)
+             << " U:" << abbrevsize(a.uploadSpeed) << std::endl
+             << "File: " << a.filename << std::endl;
+      }
     }
   }
   int rv = aria2::sessionFinal(session);
+  std::cout << "Return value from aria2: " << rv << std::endl;
 }

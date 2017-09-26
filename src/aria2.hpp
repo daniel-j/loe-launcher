@@ -10,8 +10,6 @@
 #include <unordered_map>
 #include <aria2/aria2.h>
 
-class App;
-
 // This struct is used to report download progress for active
 // downloads from downloader thread to UI thread.
 struct DownloadStatus {
@@ -124,7 +122,7 @@ class Job {
   virtual void execute(aria2::Session* session, Downloader* downloader) = 0;
 };*/
 
-typedef SynchronizedQueue<std::function<void()>> JobQueue;
+
 /*
 // Job to send URI to download and options to downloader thread
 class AddUriJob : public Job {
@@ -154,6 +152,8 @@ void AddUriJob::execute(aria2::Session* session, Downloader* downloader) {
 }
 */
 
+typedef SynchronizedQueue<std::function<void()>> JobQueue;
+typedef SynchronizedQueue<std::function<void()>> NotifyQueue;
 typedef std::function<void(bool)> FetchCallback;
 
 class Downloader {
@@ -161,7 +161,6 @@ class Downloader {
   std::mutex m_;
   std::thread* threadRef = nullptr;
   JobQueue jobq;
-  // NotifyQueue notifyq;
   bool keepRunning = true;
   aria2::Session* session;
   std::unordered_map<aria2::A2Gid,FetchCallback> callbacks;
@@ -173,10 +172,12 @@ class Downloader {
   void addUri(std::vector<std::string>& uris, aria2::KeyVals& options, aria2::A2Gid* g, FetchCallback& callback);
 
  public:
+  NotifyQueue notifyq;
+
   Downloader() {}
   ~Downloader();
   void begin();
-  void fetch(std::string uri, std::string filepath, FetchCallback callback);
+  void fetch(std::string uri, std::string dir, std::string filename, FetchCallback callback);
 };
 
 

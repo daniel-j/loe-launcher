@@ -10,7 +10,6 @@
 
 #include "lib/tinyfiledialogs.hpp"
 #include "lib/cfgpath.hpp"
-#include "lib/json.hpp"
 
 #include "image.hpp"
 #include "button.hpp"
@@ -24,8 +23,6 @@
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 
-using json = nlohmann::json;
-
 // std::mutex ariamutex;
 // aria2::Session* session;
 float progress = 0.0;
@@ -34,36 +31,20 @@ float progress = 0.0;
 char configpath[MAX_PATH];
 char default_gamedir[MAX_PATH];
 char cache_path[MAX_PATH];
-std::string configfile;
-json config;
-
-void saveConfig() {
-  std::cout << "Saving config to " << configfile << std::endl << config.dump(2) << std::endl;
-  std::ofstream f(configfile);
-  f << config.dump(2) << std::endl;
-}
-
-/*int App::downloadThread() {
-  ariaWorker(jobq_, notifyq_);
-  return 0;
-}*/
 
 App::App() {
-
   // downloaderThread_(this::downloadThread, std::ref(jobq_), std::ref(notifyq_))
 }
 
 App::~App() {
-  SDL_DestroyTexture(Button::texture);
-  SDL_DestroyRenderer(renderer);
-  SDL_DestroyWindow(mainWindow);
+  if (renderer) SDL_DestroyRenderer(renderer);
+  if (mainWindow) SDL_DestroyWindow(mainWindow);
 
   IMG_Quit();
   SDL_Quit();
 }
 int App::run() {
-
-  // std::thread downloaderThread_(&App::downloadThread, this);
+  downloader.begin();
 
   get_user_config_folder(configpath, MAX_PATH, APP_NAME);
   get_user_data_folder(default_gamedir, MAX_PATH, "LoE");
@@ -91,7 +72,7 @@ int App::run() {
   SDL_Init(SDL_INIT_VIDEO);
   IMG_Init(IMG_INIT_PNG);
 
-  SDL_Window* mainWindow = SDL_CreateWindow(
+  mainWindow = SDL_CreateWindow(
     "Legends of Equestria Launcher",  // window title
     SDL_WINDOWPOS_CENTERED,           // initial x position
     SDL_WINDOWPOS_CENTERED,           // initial y position
@@ -103,12 +84,13 @@ int App::run() {
   SDL_SetWindowIcon(mainWindow, icon);
   SDL_FreeSurface(icon);
 
-  SDL_Renderer* renderer = SDL_CreateRenderer(
+  renderer = SDL_CreateRenderer(
     mainWindow,
     -1,
     SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
   SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
   SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "best");
+  SDL_SetHint(SDL_HINT_VIDEO_ALLOW_SCREENSAVER, "1");
 
   /*std::string path = "slides";
   for (auto & p : fs::directory_iterator(path)) {
@@ -137,22 +119,16 @@ int App::run() {
   SDL_RenderClear(renderer);
   SDL_RenderPresent(renderer);
 
-  //std::vector<std::string> uris = {"https://djazz.se/nas/games/loe/versions.json"};
-  //aria2::KeyVals options;
   auto cpath = std::string(cache_path);
   cpath.pop_back();
-  //options.push_back(std::make_pair("dir", cpath));
-
-  // jobq_.push(std::unique_ptr<Job>(new AddUriJob(std::move(uris), std::move(options), &versionsGid)));
-
-  downloader.begin();
   downloader.fetch(
-    "https://djazz.se/nas/games/loe/versions.json",
-    std::string(cache_path) + "versions.json",
-    [this,&button,&mainWindow](bool success) {
+    "https://djazz.se/nas/games/loe/versions.json", cpath, "versions.json",
+    [this, &button](bool success) {
       button.disabled = false;
+      std::cout << "Success: " << success << std::endl;
       if (!success) {
-        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error checking for updates", "Unable to contact update server", mainWindow);
+        tinyfd_messageBox("Error connection to update server", "Couldn't connect to update server", "ok", "warning", 1);
+        std::cout << "Unable to connect to update server" << std::endl;
         return;
       }
       fetchedVersions();
@@ -200,6 +176,10 @@ int App::run() {
       }
     }
     if (!isrunning) break;
+    while (!downloader.notifyq.empty()) {
+      auto n = downloader.notifyq.pop();
+      n();
+    }
 
     unsigned int t = SDL_GetTicks();
 
@@ -233,12 +213,17 @@ int App::run() {
     SDL_RenderPresent(renderer);
   }
 
-  printf("Closed window\n");
+  std::cout << "Closed window." << std::endl;
 
-  //jobq_.push(std::unique_ptr<Job>(new ShutdownJob(false)));
-  //downloaderThread_.join();
+  // jobq_.push(std::unique_ptr<Job>(new ShutdownJob(false)));
 
   return EXIT_SUCCESS;
+}
+
+void App::saveConfig() {
+  std::cout << "Saving config to " << configfile << std::endl << config.dump(2) << std::endl;
+  std::ofstream f(configfile);
+  f << config.dump(2) << std::endl;
 }
 
 void App::fetchedVersions() {
