@@ -9,20 +9,14 @@
 
 class App {
  private:
-  // std::thread downloaderThread_;
-  JobQueue jobq_;
-  NotifyQueue notifyq_;
-  std::mutex mutexStatus;
+  Downloader downloader;
   SDL_Window* mainWindow = nullptr;
   SDL_Renderer* renderer = nullptr;
-  aria2::A2Gid versionsGid;
-  std::string currentVersion = "";
+  std::string latestVersion = "";
  public:
   App();
   ~App();
   int run();
-  int downloadThread();
-  void handleDownloadEvent(DownloadEvent*);
   void fetchedVersions();
 };
 

@@ -1,8 +1,7 @@
 
-#include <mutex>
-
 #include "aria2.hpp"
 
+/*
 std::mutex ariamutex;
 
 template <typename T> std::string abbrevsize(T size) {
@@ -26,11 +25,11 @@ int downloadEventCallback(aria2::Session* session, aria2::DownloadEvent event,
   auto ev = new DownloadEvent;
   ev->event = std::move(event);
   ev->gid = std::move(gid);
-  notifyq->push(std::unique_ptr<Notification>(new Notification(DownloadEventNotification, ev)));
+  // notifyq->push(std::unique_ptr<Notification>(new Notification(DownloadEventNotification, ev)));
 
   return 0;
 
-  /*
+
   switch (event) {
     case aria2::EVENT_ON_DOWNLOAD_START:
       std::cerr << "STARTED";
@@ -63,9 +62,9 @@ int downloadEventCallback(aria2::Session* session, aria2::DownloadEvent event,
   std::cerr << std::endl;
 
   return 0;
-  */
-}
+}*/
 
+/*
 int ariaWorker(JobQueue& jobq, NotifyQueue& notifyq) {
   aria2::libraryInit();
   // session is actually singleton: 1 session per process
@@ -128,4 +127,92 @@ int ariaWorker(JobQueue& jobq, NotifyQueue& notifyq) {
   // exit. This is needed when user pressed ctrl-C in the terminal.
   //notifyq.push(std::unique_ptr<Notification>(new ShutdownNotification()));
   return rv;
+}
+*/
+
+
+Downloader::~Downloader() {
+  keepRunning = false;
+  if (threadRef) {
+    threadRef->join();
+    delete threadRef;
+  }
+  aria2::libraryDeinit();
+}
+
+void Downloader::begin() {
+  threadRef = new std::thread(&Downloader::threadFunc, this);
+}
+
+int Downloader::downloadEventCallback(aria2::Session* session, aria2::DownloadEvent event,
+                                      aria2::A2Gid gid, void* userData) {
+  auto self = (Downloader*)userData;
+  std::lock_guard<std::mutex> l(self->m_);
+
+  auto cb = self->callbacks[gid];
+
+  if (cb && event == aria2::EVENT_ON_DOWNLOAD_COMPLETE) {
+    cb(true);
+  } else if (cb && event == aria2::EVENT_ON_DOWNLOAD_ERROR) {
+    cb(false);
+  }
+
+  return 0;
+}
+
+void addUri(std::vector<std::string> uris, aria2::KeyVals& options, aria2::A2Gid* g, FetchCallback& callback) {
+  std::cout << "hi from adduri!" << std::endl;
+}
+
+void Downloader::fetch(std::string uri, std::string filepath, FetchCallback callback) {
+  std::vector<std::string> uris = {uri};
+  aria2::KeyVals options;
+  options.push_back(std::make_pair("out", filepath));
+  // jobq.push(std::unique_ptr<Job>(new AddUriJob(std::move(uris), std::move(options), &gid, std::move(callback))));
+  jobq.push([=]() {
+    aria2::A2Gid gid;
+    int rv = aria2::addUri(session, &gid, uris, options);
+    if (rv != 0) {
+      std::cerr << "aria2: Failed to add uri " << uri << std::endl;
+      callback(false);
+      return;
+    } else {
+      callbacks[gid] = callback;
+      // callback(aria2::gidToHex(*gid));
+      std::cout << aria2::gidToHex(gid) << std::endl;
+    }
+  });
+}
+
+void Downloader::threadFunc() {
+  aria2::libraryInit();
+
+  aria2::SessionConfig config;
+  config.keepRunning = true;
+  config.userData = (void*)this;
+  config.downloadEventCallback = &Downloader::downloadEventCallback;
+
+  aria2::KeyVals opts;
+  opts.push_back(std::make_pair("no-conf", "true"));
+  opts.push_back(std::make_pair("check-integrity", "true"));
+  opts.push_back(std::make_pair("seed-time", "0"));
+  opts.push_back(std::make_pair("bt-tracker-interval", "10"));
+  opts.push_back(std::make_pair("allow-overwrite", "true"));
+  opts.push_back(std::make_pair("auto-file-renaming", "false"));
+  opts.push_back(std::make_pair("follow-torrent", "mem"));
+
+  session = aria2::sessionNew(opts, config);
+  for (;;) {
+    if (!keepRunning) break;
+    int rv = aria2::run(session, aria2::RUN_ONCE);
+    if (rv != 1) {
+      break;
+    }
+    while (!jobq.empty()) {
+      auto job = jobq.pop();
+      //job->execute(session, this);
+      job();
+    }
+  }
+  int rv = aria2::sessionFinal(session);
 }

@@ -43,10 +43,10 @@ void saveConfig() {
   f << config.dump(2) << std::endl;
 }
 
-int App::downloadThread() {
+/*int App::downloadThread() {
   ariaWorker(jobq_, notifyq_);
   return 0;
-}
+}*/
 
 App::App() {
 
@@ -63,7 +63,7 @@ App::~App() {
 }
 int App::run() {
 
-  std::thread downloaderThread_(&App::downloadThread, this);
+  // std::thread downloaderThread_(&App::downloadThread, this);
 
   get_user_config_folder(configpath, MAX_PATH, APP_NAME);
   get_user_data_folder(default_gamedir, MAX_PATH, "LoE");
@@ -87,8 +87,6 @@ int App::run() {
   } catch (const std::invalid_argument err) {}
 
   saveConfig();
-
-  currentVersion = config["game_version"];
 
   SDL_Init(SDL_INIT_VIDEO);
   IMG_Init(IMG_INIT_PNG);
@@ -139,13 +137,26 @@ int App::run() {
   SDL_RenderClear(renderer);
   SDL_RenderPresent(renderer);
 
-  std::vector<std::string> uris = {"https://djazz.se/nas/games/loe/versions.json"};
-  aria2::KeyVals options;
+  //std::vector<std::string> uris = {"https://djazz.se/nas/games/loe/versions.json"};
+  //aria2::KeyVals options;
   auto cpath = std::string(cache_path);
   cpath.pop_back();
-  options.push_back(std::make_pair("dir", cpath));
+  //options.push_back(std::make_pair("dir", cpath));
 
-  jobq_.push(std::unique_ptr<Job>(new AddUriJob(std::move(uris), std::move(options), &versionsGid)));
+  // jobq_.push(std::unique_ptr<Job>(new AddUriJob(std::move(uris), std::move(options), &versionsGid)));
+
+  downloader.begin();
+  downloader.fetch(
+    "https://djazz.se/nas/games/loe/versions.json",
+    std::string(cache_path) + "versions.json",
+    [this,&button,&mainWindow](bool success) {
+      button.disabled = false;
+      if (!success) {
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error checking for updates", "Unable to contact update server", mainWindow);
+        return;
+      }
+      fetchedVersions();
+    });
 
   bool isrunning = true;
 
@@ -190,16 +201,6 @@ int App::run() {
     }
     if (!isrunning) break;
 
-    while (!notifyq_.empty()) {
-      auto n = notifyq_.pop();
-      switch (n->type) {
-        case DownloadEventNotification:
-          handleDownloadEvent(static_cast<DownloadEvent*>(n->data));
-          button.disabled = false;
-          break;
-      }
-    }
-
     unsigned int t = SDL_GetTicks();
 
     SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
@@ -234,32 +235,10 @@ int App::run() {
 
   printf("Closed window\n");
 
-  jobq_.push(std::unique_ptr<Job>(new ShutdownJob(false)));
-  downloaderThread_.join();
+  //jobq_.push(std::unique_ptr<Job>(new ShutdownJob(false)));
+  //downloaderThread_.join();
 
   return EXIT_SUCCESS;
-}
-
-void App::handleDownloadEvent(DownloadEvent* ev) {
-  switch (ev->event) {
-    case aria2::EVENT_ON_DOWNLOAD_START:
-      std::cerr << "STARTED";
-      break;
-    case aria2::EVENT_ON_DOWNLOAD_COMPLETE:
-      if (ev->gid == versionsGid) {
-        fetchedVersions();
-        std::cout << "Versions downloaded!" << std::endl;
-      }
-      std::cerr << "COMPLETE";
-      break;
-    case aria2::EVENT_ON_DOWNLOAD_ERROR:
-      std::cerr << "ERROR";
-      break;
-    default:
-      return;
-  }
-  std::cerr << " [" << aria2::gidToHex(ev->gid) << "] ";
-  std::cerr << std::endl;
 }
 
 void App::fetchedVersions() {
@@ -269,7 +248,7 @@ void App::fetchedVersions() {
   f >> versions;
   std::cout << versions.dump(2) << std::endl;
 
-  config["game_version"] = versions[
+  latestVersion = versions[
     #ifdef __linux__
       "Linux"
     #elif defined(_WIN64)
@@ -280,5 +259,4 @@ void App::fetchedVersions() {
       "Mac"
     #endif
   ];
-  saveConfig();
 }

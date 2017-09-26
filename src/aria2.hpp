@@ -7,6 +7,7 @@
 #include <thread>
 #include <mutex>
 #include <queue>
+#include <unordered_map>
 #include <aria2/aria2.h>
 
 class App;
@@ -22,26 +23,26 @@ struct DownloadStatus {
   std::string filename;
 };
 
-template <typename T> std::string abbrevsize(T size);
+// template <typename T> std::string abbrevsize(T size);
 
 // std::queue<T> wrapper synchronized by mutex. In this example
 // program, only one thread consumes from the queue, so separating
 // empty() and pop() is not a problem.
 template <typename T> class SynchronizedQueue {
  private:
-  std::queue<std::unique_ptr<T>> q_;
+  std::queue<T> q_;
   std::mutex m_;
 
  public:
   SynchronizedQueue() {};
   ~SynchronizedQueue() {};
-  void push(std::unique_ptr<T>&& t) {
+  void push(T&& t) {
     std::lock_guard<std::mutex> l(m_);
     q_.push(std::move(t));
   }
-  std::unique_ptr<T> pop() {
+  T pop() {
     std::lock_guard<std::mutex> l(m_);
-    std::unique_ptr<T> t = std::move(q_.front());
+    auto t = std::move(q_.front());
     q_.pop();
     return t;
   }
@@ -51,14 +52,8 @@ template <typename T> class SynchronizedQueue {
   }
 };
 
-class Job {
- public:
-  virtual ~Job(){};
-  virtual void execute(aria2::Session* session) = 0;
-};
-
 // Interface to report back to UI thread from downloader thread
-struct Notification {
+/*struct Notification {
   virtual ~Notification(){};
   Notification(unsigned int type, void* data) : type(type), data(data) {};
   unsigned int type;
@@ -74,18 +69,18 @@ struct DownloadEvent {
   aria2::A2Gid gid;
 };
 
-typedef SynchronizedQueue<Job> JobQueue;
 typedef SynchronizedQueue<Notification> NotifyQueue;
+*/
 
 // Job to shutdown downloader thread
-class ShutdownJob : public Job {
+/*class ShutdownJob : public Job {
  public:
   ShutdownJob(bool force) : force(force) {}
   virtual void execute(aria2::Session* session) {
     aria2::shutdown(session, force);
   }
   bool force;
-};
+};*/
 /*
 class DownloadEventNotification : public Notification {
  public:
@@ -119,27 +114,70 @@ class ShutdownNotification : public Notification {
 };
 */
 
+//int ariaWorker(JobQueue& jobq, NotifyQueue& notifyq);
+
+/*class Downloader;
+
+class Job {
+ public:
+  virtual ~Job(){};
+  virtual void execute(aria2::Session* session, Downloader* downloader) = 0;
+};*/
+
+typedef SynchronizedQueue<std::function<void()>> JobQueue;
+/*
 // Job to send URI to download and options to downloader thread
 class AddUriJob : public Job {
  public:
-  AddUriJob(std::vector<std::string>&& uris, aria2::KeyVals&& options, aria2::A2Gid* g)
-      : uris(uris), options(options) {
+  AddUriJob(std::vector<std::string>&& uris, aria2::KeyVals&& options, aria2::A2Gid* g, FetchCallback&& callback)
+      : uris(uris), options(options), callback(callback) {
         gid = g;
       }
-  virtual void execute(aria2::Session* session) {
-    int rv = aria2::addUri(session, gid, uris, options);
-    if (rv != 0) {
-      std::cerr << "aria2: Failed to add uri " << uris[0] << std::endl;
-      return;
-    } else {
-      std::cout << aria2::gidToHex(*gid) << std::endl;
-    }
-  }
+  virtual void execute(aria2::Session* session, Downloader* downloader);
+  FetchCallback callback;
   std::vector<std::string> uris;
   aria2::KeyVals options;
   aria2::A2Gid* gid;
 };
 
-int ariaWorker(JobQueue& jobq, NotifyQueue& notifyq);
+
+void AddUriJob::execute(aria2::Session* session, Downloader* downloader) {
+  int rv = aria2::addUri(session, gid, uris, options);
+  if (rv != 0) {
+    std::cerr << "aria2: Failed to add uri " << uris[0] << std::endl;
+    return;
+  } else {
+    downloader->callbacks[*gid] = callback;
+    // callback(aria2::gidToHex(*gid));
+    std::cout << aria2::gidToHex(*gid) << std::endl;
+  }
+}
+*/
+
+typedef std::function<void(bool)> FetchCallback;
+
+class Downloader {
+ private:
+  std::mutex m_;
+  std::thread* threadRef = nullptr;
+  JobQueue jobq;
+  // NotifyQueue notifyq;
+  bool keepRunning = true;
+  aria2::Session* session;
+  std::unordered_map<aria2::A2Gid,FetchCallback> callbacks;
+
+  static int downloadEventCallback(aria2::Session* session, aria2::DownloadEvent event,
+                          aria2::A2Gid gid, void* userData);
+
+  void threadFunc();
+  void addUri(std::vector<std::string>& uris, aria2::KeyVals& options, aria2::A2Gid* g, FetchCallback& callback);
+
+ public:
+  Downloader() {}
+  ~Downloader();
+  void begin();
+  void fetch(std::string uri, std::string filepath, FetchCallback callback);
+};
+
 
 #endif
