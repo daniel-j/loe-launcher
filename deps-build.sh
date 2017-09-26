@@ -38,7 +38,7 @@ clean_prefix() {
 }
 
 build_libcwrap() {
-	$LINUX && [ "$CROSSWIN" == "false" ] || return
+	$LINUX && [ "$CROSSWIN" == "false" ] || return 0
 	echo "Building LibcWrapGenerator"
 	cd "$SRC"
 	valac --pkg gee-0.8 --pkg posix --pkg glib-2.0 --pkg gio-2.0 ./LibcWrapGenerator.vala
@@ -47,12 +47,12 @@ build_libcwrap() {
 }
 
 run_libcwrap() {
-	$LINUX && [ "$CROSSWIN" == "false" ] || return
+	$LINUX && [ "$CROSSWIN" == "false" ] || return 0
 	LibcWrapGenerator --target 2.10 --libdir /lib --output "$PREFIX/libcwrap.h"
 }
 
 build_zlib() {
-	[ "$CROSSWIN" == "false" ] || return
+	[ "$CROSSWIN" == "false" ] || return 0
 	echo "Building zlib"
 	cd "$SRC/zlib"
 	./configure --prefix="$PREFIX"
@@ -62,7 +62,7 @@ build_zlib() {
 }
 
 build_openssl() {
-	$LINUX && [ "$CROSSWIN" == "false" ] || return
+	$LINUX && [ "$CROSSWIN" == "false" ] || return 0
 	echo "Building OpenSSL"
 	cd "$SRC/openssl"
 	./Configure --prefix="$PREFIX" linux-x86_64 shared
@@ -72,7 +72,7 @@ build_openssl() {
 }
 
 build_libpng() {
-	[ "$CROSSWIN" == "false" ] || return
+	[ "$CROSSWIN" == "false" ] || return 0
 	echo "Building libpng"
 	cd "$SRC/libpng"
 	./configure --prefix="$PREFIX" --host="$HOST" PKG_CONFIG_PATH="$PKG_CONFIG_PATH" CC="$CC" CXX="$CXX" LFLAGS="$LFLAGS" CXXFLAGS="$CXXFLAGS"
@@ -141,7 +141,7 @@ build_SDL2_image() {
 
 
 build_dylibbundler() {
-	$MACOS || return
+	$MACOS || return 0
 	echo "Building dylibbundler"
 	cd "$SRC/dylibbundler"
 	make install PREFIX="$PREFIX"
@@ -182,6 +182,7 @@ if [ "$1" == "all" ]; then
 	build_SDL2_image
 
 	build_aria2
+
 elif [ ! -z "$1" ]; then
 	echo "Building dependencies $1"
 	$1
