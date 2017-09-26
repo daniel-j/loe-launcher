@@ -11,7 +11,7 @@ PLATFORM := $(shell uname -s)
 # Linux
 ifeq ($(PLATFORM),Linux)
     CXX := $(CXX) -U_FORTIFY_SOURCE -D_GLIBCXX_USE_CXX11_ABI=0 -include "prefix/libcwrap.h"
-    LFLAGS += -static-libgcc -static-libstdc++
+    LDFLAGS += -static-libgcc -static-libstdc++
     LIBS += -lc++ -lc++abi -Lprefix/lib -laria2 -lSDL2 -lSDL2_image
     INCLUDES += -Iprefix/include
 
@@ -24,7 +24,7 @@ ifeq ($(PLATFORM),Linux)
 endif
 # macOS
 ifeq ($(PLATFORM),Darwin)
-    LFLAGS = -static-libstdc++
+    LDFLAGS = -static-libstdc++
     LIBS += -Lprefix/lib -laria2 -lSDL2 -lSDL2_image
     INCLUDES += -Iprefix/include
 
@@ -51,7 +51,7 @@ HEADERS := $(shell find $(SOURCE) -name '*.hpp')
 .PRECIOUS: $(TARGET) $(OBJECTS) $(OBJECTSWIN)
 
 # $(TARGET): $(OBJECTS) Makefile
-# 	$(CXX) $(CXXFLAGS) $(INCLUDES) -o $@ $(OBJECTS) $(LFLAGS) $(LIBS)
+# 	$(CXX) $(CXXFLAGS) $(INCLUDES) -o $@ $(OBJECTS) $(LDFLAGS) $(LIBS)
 
 default:
 	@mkdir -p build
@@ -64,7 +64,7 @@ windows/icon.ico: assets/icon.png
 windows: $(TARGET).exe
 $(TARGET).exe: $(OBJECTSWIN) windows/icon.ico Makefile
 	$(MINGW)-windres windows/exe.rc -O coff -o src/res.owin
-	$(CXXWIN) $(CXXWINFLAGS) $(INCLUDESWIN) -o $@ $(OBJECTSWIN) src/res.owin $(LFLAGS) $(LIBSWIN)
+	$(CXXWIN) $(CXXWINFLAGS) $(INCLUDESWIN) -o $@ $(OBJECTSWIN) src/res.owin $(LDFLAGS) $(LIBSWIN)
 
 windowsinstaller:
 	rm -rf wininst

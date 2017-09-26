@@ -7,27 +7,43 @@ set -e
 root=$(pwd)
 
 SRC="$root/deps"
+LIBDIR=/usr/lib64
 export SHELL=/bin/bash
-export PREFIX="$root/prefix"
+export PREFIX="$root/prefix-${ARCH}"
 export PATH="$PREFIX/bin:$PATH"
 export LD_LIBRARY_PATH="$PREFIX/lib:$LD_LIBRARY_PATH"
-export PKG_CONFIG_PATH="$PREFIX/lib/pkgconfig:$PKG_CONFIG_PATH"
-#export LFLAGS="-static-libgcc -static-libstdc++"
+OPENSSLTARGET=linux-x86_64-clang
+#export LDFLAGS="-static-libgcc -static-libstdc++"
 export CC="clang"
 export CXX="clang++"
 export CFLAGS=""
 export CXXFLAGS="-g -O2 -stdlib=libc++"
-export LFLAGS=""
+export LDFLAGS=""
+export HOST="x86_64-pc-linux-gnu"
 
 $LINUX && [ "$CROSSWIN" == "false" ] && export CC="$CC -U_FORTIFY_SOURCE -include $PREFIX/libcwrap.h"
 $LINUX && [ "$CROSSWIN" == "false" ] && export CXX="$CXX -U_FORTIFY_SOURCE -D_GLIBCXX_USE_CXX11_ABI=0 -include $PREFIX/libcwrap.h"
 
 $CROSSWIN && MINGW="x86_64-w64-mingw32"
+$CROSSWIN && export CXXFLAGS=""
+
+if [ "$ARCH" != "x86_64" ]; then
+	export HOST="i686-pc-linux-gnu"
+	export CFLAGS="-m32 $CFLAGS"
+	export LDFLAGS="-m32 $LDFLAGS"
+	export CXXFLAGS="-m32 $CXXFLAGS"
+	LIBDIR=/usr/lib32
+	OPENSSLTARGET=linux-x86-clang
+	$CROSSWIN && MINGW="i686-w64-mingw32"
+	$CROSSWIN && export CXXFLAGS="-m32"
+	export CPPFLAGS="-m32"
+fi
+
+export PKG_CONFIG_PATH="$PREFIX/lib/pkgconfig:$PKG_CONFIG_PATH"
 $CROSSWIN && export HOST="$MINGW"
 $CROSSWIN && export PREFIX="${PREFIX}-win"
 $CROSSWIN && export CC="$MINGW-gcc"
 $CROSSWIN && export CXX="$MINGW-g++"
-$CROSSWIN && export CXXFLAGS=""
 
 # multicore compilation
 $MACOS && makearg="-j$(sysctl -n hw.ncpu)" || makearg="-j$(nproc)"
@@ -41,14 +57,14 @@ build_libcwrap() {
 	$LINUX && [ "$CROSSWIN" == "false" ] || return 0
 	echo "Building LibcWrapGenerator"
 	cd "$SRC"
-	valac --pkg gee-0.8 --pkg posix --pkg glib-2.0 --pkg gio-2.0 ./LibcWrapGenerator.vala
+	CC="clang" valac --pkg gee-0.8 --pkg posix --pkg glib-2.0 --pkg gio-2.0 ./LibcWrapGenerator.vala
 	mkdir -p "$PREFIX/bin/"
 	mv -v ./LibcWrapGenerator "$PREFIX/bin/"
 }
 
 run_libcwrap() {
 	$LINUX && [ "$CROSSWIN" == "false" ] || return 0
-	LibcWrapGenerator --target 2.10 --libdir /lib --output "$PREFIX/libcwrap.h"
+	LibcWrapGenerator --target 2.10 --libdir $LIBDIR --output "$PREFIX/libcwrap.h"
 }
 
 build_zlib() {
@@ -65,7 +81,7 @@ build_openssl() {
 	$LINUX && [ "$CROSSWIN" == "false" ] || return 0
 	echo "Building OpenSSL"
 	cd "$SRC/openssl"
-	./Configure --prefix="$PREFIX" linux-x86_64 shared
+	./Configure --prefix="$PREFIX" $OPENSSLTARGET shared
 	make $makearg
 	make install
 	make distclean
@@ -75,7 +91,7 @@ build_libpng() {
 	[ "$CROSSWIN" == "false" ] || return 0
 	echo "Building libpng"
 	cd "$SRC/libpng"
-	./configure --prefix="$PREFIX" --host="$HOST" PKG_CONFIG_PATH="$PKG_CONFIG_PATH" CC="$CC" CXX="$CXX" LFLAGS="$LFLAGS" CXXFLAGS="$CXXFLAGS"
+	./configure --prefix="$PREFIX" --host="$HOST" PKG_CONFIG_PATH="$PKG_CONFIG_PATH" CC="$CC" CXX="$CXX" LDFLAGS="$LDFLAGS" CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS"
 	make $makearg
 	make install
 	make distclean
@@ -94,12 +110,12 @@ build_SDL2() {
 	bash ./autogen.sh || true
 	mkdir -p build
 	cd build
-	../configure --prefix="$PREFIX" --host="$HOST" PKG_CONFIG_PATH="$PKG_CONFIG_PATH" CC="$CC" CXX="$CXX" LFLAGS="$LFLAGS" CXXFLAGS="$CXXFLAGS" \
+	../configure --prefix="$PREFIX" --host="$HOST" PKG_CONFIG_PATH="$PKG_CONFIG_PATH" CC="$CC" CXX="$CXX" LDFLAGS="$LDFLAGS" CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" \
 		--enable-sdl-dlopen \
 		--disable-audio \
 		--enable-video-wayland --enable-wayland-shared \
 		--enable-x11-shared --enable-ibus --enable-fcitx --enable-ime \
-		--disable-rpath --disable-video-vulkan \
+		--disable-rpath --disable-video-vulkan --disable-input-tslib \
 		#--disable-input-tslib --disable-atomic \
 		#--disable-haptic --disable-joystick --disable-power \
 		#--disable-file --disable-loadso --disable-cpuinfo
@@ -112,7 +128,7 @@ build_SDL2_image() {
 	echo "Building SDL2_image"
 	cd "$SRC/SDL2_image"
 	bash ./autogen.sh || true
-	./configure --prefix="$PREFIX" --host="$HOST" PKG_CONFIG_PATH="$PKG_CONFIG_PATH" CC="$CC" CXX="$CXX" LFLAGS="$LFLAGS" CXXFLAGS="$CXXFLAGS" \
+	./configure --prefix="$PREFIX" --host="$HOST" PKG_CONFIG_PATH="$PKG_CONFIG_PATH" CC="$CC" CXX="$CXX" LDFLAGS="$LDFLAGS" CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" \
 		--with-sdl-prefix="$PREFIX" --disable-webp --disable-gif --disable-lbm \
 		--disable-pcx --disable-pnm --disable-tga --disable-xpm --disable-xv --disable-xcf \
 		--enable-png --disable-png-shared --disable-tif --disable-jpg --disable-jpg-shared
@@ -151,7 +167,7 @@ build_dylibbundler() {
 build_aria2() {
 	echo "Building aria2"
 	cd "$SRC/aria2"
-	./configure --prefix="$PREFIX" --host="$HOST" PKG_CONFIG_PATH="$PKG_CONFIG_PATH" CC="$CC" CXX="$CXX" LFLAGS="$LFLAGS" CXXFLAGS="$CXXFLAGS"  \
+	./configure --prefix="$PREFIX" --host="$HOST" PKG_CONFIG_PATH="$PKG_CONFIG_PATH" CC="$CC" CXX="$CXX" LDFLAGS="$LDFLAGS" CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS"  \
 		--disable-metalink --disable-websocket --enable-libaria2 \
 		--disable-rpath --without-sqlite3 --without-libxml2 --without-libexpat \
 		--without-libssh2 --enable-bittorrent --without-libcares --without-gnutls \
