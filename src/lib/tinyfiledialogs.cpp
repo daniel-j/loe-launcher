@@ -3522,7 +3522,7 @@ static int zenity3Present()
 		lZenity3Present = 0 ;
 		if ( zenityPresent() )
 		{
-			lIn = popen( "zenity --version" , "r" ) ;
+			lIn = popen( "zenity --version --attach=0" , "r" ) ;
 			if ( fgets( lBuff , sizeof( lBuff ) , lIn ) != NULL )
 			{
 				if ( atoi(lBuff) >= 3 )
