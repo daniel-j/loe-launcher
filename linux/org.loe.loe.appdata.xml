@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop">
+  <id>org.loe.loe</id>
+  <name>Legends of Equestria</name>
+  <developer_name>Legends of Equestria</developer_name>
+  <summary>Legends of Equestria is a free online 3D MMORPG</summary>
+  <description>
+    <p>Legends of Equestria is a free online 3D MMORPG</p>
+  </description>
+  <metadata_license>FSFAP</metadata_license>
+  <url type="bugtracker">http://phabricator.legendsofequestria.com/</url>
+  <url type="faq">https://www.legendsofequestria.com/faq</url>
+  <url type="homepage">https://www.legendsofequestria.com/</url>
+</component>

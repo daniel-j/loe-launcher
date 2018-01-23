@@ -1,6 +1,6 @@
 [Desktop Entry]
 Name=Legends of Equestria
 Exec=AppRun
-Icon=assets/icon
+Icon=loe
 Type=Application
-Categories=Game
+Categories=Game;

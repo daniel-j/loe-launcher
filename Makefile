@@ -95,11 +95,13 @@ appimage:
 	mkdir -p $(APPDIR)
 	cp loelauncher $(APPDIR)/
 	cp -r assets $(APPDIR)/
-	mkdir -p $(APPDIR)/libs
+	mkdir -p $(APPDIR)/libs $(APPDIR)/usr/share/metainfo
 	LD_LIBRARY_PATH=$(PREFIX)/lib ./linux/findlibs.sh ./loelauncher $(APPDIR)/libs
 	cp linux/AppRun $(APPDIR)/
-	cp linux/loe.desktop $(APPDIR)/
-	ln -s assets/icon.png $(APPDIR)/.DirIcon
+	cp linux/loe.desktop $(APPDIR)/org.loe.loe.desktop
+	cp linux/org.loe.loe.appdata.xml $(APPDIR)/usr/share/metainfo/org.loe.loe.appdata.xml
+	#ln -s assets/icon.png $(APPDIR)/.DirIcon
+	cp assets/icon.png $(APPDIR)/loe.png
 	chmod 755 $(APPDIR)/libs/*.so*
 	strip -x $(APPDIR)/loelauncher $(APPDIR)/libs/*.so*
 	deps/appimagetool.AppImage $(APPDIR) -v LoE.AppImage
