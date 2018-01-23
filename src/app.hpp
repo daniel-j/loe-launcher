@@ -18,6 +18,7 @@ class App {
   std::string configfile;
 	json config;
   std::string latestVersion = "";
+  std::string latestLauncher = "";
  public:
   App();
   ~App();

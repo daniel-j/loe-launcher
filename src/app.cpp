@@ -59,6 +59,7 @@ int App::run() {
   // Default config
   config["game_dir"] = default_gamedir;
   config["game_version"] = "";
+  config["launcher_version"] = "";
 
   try {
     std::ifstream f(configfile);
@@ -103,7 +104,7 @@ int App::run() {
   Button::texture = IMG_LoadTexture(renderer, "assets/button.png");
   if (!Button::texture) {
     std::cerr << "IMG_Load: " << IMG_GetError() << std::endl;
-    // return EXIT_FAILURE;
+    return EXIT_FAILURE;
   }
 
   Button button(renderer, 475, WINDOW_HEIGHT - 100);
@@ -123,15 +124,25 @@ int App::run() {
   cpath.pop_back();
   downloader.fetch(
     "https://djazz.se/nas/games/loe/versions.json", cpath, "versions.json",
-    [this, &button](bool success) {
-      button.disabled = false;
+    [this, &button, &cpath](bool success) {
       std::cout << "Success: " << success << std::endl;
       if (!success) {
         tinyfd_messageBox("Error connection to update server", "Couldn't connect to update server", "ok", "warning", 1);
         std::cout << "Unable to connect to update server" << std::endl;
         return;
       }
-      fetchedVersions();
+
+      downloader.fetch(
+        "https://djazz.se/nas/games/loe/launchers.json", cpath, "launchers.json",
+        [this, &button](bool success) {
+          button.disabled = false;
+          if (!success) {
+            tinyfd_messageBox("Error connection to update server", "Couldn't connect to update server", "ok", "warning", 1);
+            std::cout << "Unable to connect to update server" << std::endl;
+            return;
+          }
+          fetchedVersions();
+        });
     });
 
   bool isrunning = true;
@@ -228,10 +239,15 @@ void App::saveConfig() {
 
 void App::fetchedVersions() {
   json versions;
+  json launchers;
 
-  std::ifstream f(std::string(cache_path) + "versions.json");
-  f >> versions;
+  std::ifstream versionsFile(std::string(cache_path) + "versions.json");
+  versionsFile >> versions;
   std::cout << versions.dump(2) << std::endl;
+
+  std::ifstream launchersFile(std::string(cache_path) + "launchers.json");
+  launchersFile >> launchers;
+  std::cout << launchers.dump(2) << std::endl;
 
   latestVersion = versions[
     #ifdef __linux__
@@ -244,4 +260,19 @@ void App::fetchedVersions() {
       "Mac"
     #endif
   ];
+
+  latestLauncher = launchers[
+    #ifdef __linux__
+      "Linux"
+    #elif defined(_WIN64)
+      "win64"
+    #elif defined(_WIN32)
+      "win32"
+    #elif defined(__APPLE__)
+      "Mac"
+    #endif
+  ];
+
+  std::cout << "Latest version: " << latestVersion << std::endl
+            << "Latest launcher: " << latestLauncher << std::endl;
 }
