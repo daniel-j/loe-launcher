@@ -64,8 +64,8 @@ int App::run() {
     std::ifstream f(configfile);
     json j;
     f >> j;
-    config.patch(j);
-  } catch (const std::invalid_argument err) {}
+    config.update(j);
+  } catch (json::exception& e) {}
 
   saveConfig();
 
