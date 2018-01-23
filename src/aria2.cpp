@@ -103,8 +103,10 @@ int Downloader::downloadEventCallback(aria2::Session* session, aria2::DownloadEv
   auto cb = self->callbacks[gid];
 
   if (cb && event == aria2::EVENT_ON_DOWNLOAD_COMPLETE) {
+    self->callbacks.erase(gid);
     self->notifyq.push([cb]() {cb(true);});
   } else if (cb && event == aria2::EVENT_ON_DOWNLOAD_ERROR) {
+    self->callbacks.erase(gid);
     self->notifyq.push([cb]() {cb(false);});
   }
 
