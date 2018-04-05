@@ -1,0 +1,31 @@
+{
+  "name": "loe-launcher",
+  "version": "0.0.1",
+  "description": "Legends of Equestria launcher",
+  "private": true,
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/daniel-j/loe-launcher.git"
+  },
+  "keywords": [
+    "launcher"
+  ],
+  "author": "djazz",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/daniel-j/loe-launcher/issues"
+  },
+  "homepage": "https://github.com/daniel-j/loe-launcher#readme",
+  "devDependencies": {
+    "electron": "^2.0.0-beta.7"
+  },
+  "dependencies": {
+    "arch": "^2.1.0",
+    "webtorrent": "^0.98.24"
+  }
+}
