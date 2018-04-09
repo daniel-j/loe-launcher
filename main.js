@@ -128,33 +128,6 @@ function handleFile (index, file, state) {
       const gunzip = zlib.createGunzip()
 
       let downloaded = 0
-      res.pipe(concat((data) => {
-        console.log(data)
-        let buf = zlib.gzipSync(zlib.gunzipSync(data).slice(0, 2048), {
-          // flush: zlib.constants.Z_PARTIAL_FLUSH,
-          // chunkSize: 2048,
-          memLevel: 8,
-          windowBits: 15,
-          level: 9
-        })
-        console.log(buf)
-
-        let d = zlib.createDeflateRaw({
-          flush: zlib.constants.Z_PARTIAL_FLUSH,
-          // chunkSize: 2048,
-          memLevel: 8,
-          windowBits: 15,
-          level: 9
-        })
-
-        d.pipe(concat((buf) => {
-          console.log(buf)
-        }))
-        d.write(zlib.gunzipSync(data).slice(0, 2048))
-        d.flush()
-        d.write(zlib.gunzipSync(data).slice(2048, 2048 * 2))
-        d.end()
-      }))
       res.on('data', (data) => {
         state.ss.write(data)
         downloaded += data.length
