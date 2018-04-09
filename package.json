@@ -27,6 +27,7 @@
   "dependencies": {
     "arch": "^2.1.0",
     "concat-stream": "^1.6.2",
+    "megajs": "^0.13.2",
     "mkdirp": "^0.5.1",
     "progress-stream": "^2.0.0",
     "promise-limit": "^2.6.0",

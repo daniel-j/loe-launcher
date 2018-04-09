@@ -8,56 +8,100 @@ const progress = require('progress-stream')
 const promiseLimit = require('promise-limit')
 const fetch = require('./src/fetch')
 const utils = require('./src/utils')
+const concat = require('concat-stream')
+
+/*
+const mega = require('megajs')
+
+const file = mega.File.fromURL('https://mega.nz/#!5yYVABiC!94LcCKDUfeM2nYAt1VjpjC_5cB6h2beI3ATRPYsAt9A')
+file.loadAttributes((err) => {
+  console.log(file.name, file.size / 1024 / 1024)
+  let start = 0
+  try {
+    start = fs.statSync(file.name).size
+  } catch (err) {}
+  if (start >= file.size) return
+  file.download({start}).pipe(fs.createWriteStream(file.name, {flags: 'r+', start}))
+})
+*/
 
 const WebTorrent = require('webtorrent')
 
-const client = new WebTorrent()
+const client = new WebTorrent({
+  webSeeds: true,
+  dht: false,
+  tracker: false
+})
 
-client.on('torrent', (torrent) => {
-  console.log('torrent ready')
+client.on('error', (err) => {
+  console.error(err)
 })
 
 fetch('https://djazz.se/nas/games/loe/loe-linux.torrent', {}, (err, data) => {
-  const torrent = client.add(data, {path: 'torrent'}, (torrent) => {
-    console.log('torrent ready')
-    // console.log(torrent)
-    torrent.on('warning', (warn) => {
-      console.warn('webtorrent warn: ' + warn)
+  if (err) throw err
+  let ready = false
+  let gotMetadata = false
+  const torrent = client.add(data, {path: 'torrent'}, () => {
+    console.log('Ready!')
+    ready = true
+  })
+  let timer = setInterval(() => {
+    if (!ready && gotMetadata) {
+      console.log('Verifying...', Math.round(torrent.progress * 100) + '%')
+    } else if (ready && torrent.downloadSpeed > 0) {
+      console.log(torrent.numPeers + ' peer(s),', Math.round(torrent.timeRemaining / 1000 / 60) + ' min,', Math.round(torrent.progress * 100) + '%,', Math.round(torrent.downloaded / 1024 / 1024) + ' MB downloaded,', torrent.downloadSpeed / 1024 / 1024 + ' MB/s')
+    }
+  }, 1000)
+  torrent.on('warning', (warn) => {
+    console.warn('webtorrent warn: ' + warn)
+  })
+  torrent.on('error', (err) => {
+    clearInterval(timer)
+    console.error(err)
+  })
+  torrent.on('download', (bytes) => {
+    
+  })
+  torrent.on('upload', () => {
+    console.log('upload', torrent.uploaded)
+  })
+  torrent.on('peer', (addr) => {
+    console.log('peer', addr)
+  })
+  torrent.on('update', (data) => {
+    console.log(data)
+  })
+  torrent.on('noPeers', (type) => {
+    console.log(type)
+  })
+  torrent.on('wire', (wire, addr) => {
+    console.log('wire', addr, wire.type)
+    wire.on('bitfield', (bitfield) => {
+      // console.log('got bitfield from wire', addr)
     })
-    torrent.on('download', (bytes) => {
-      console.log(Math.round(torrent.timeRemaining / 1000 / 60) + ' min', Math.round(torrent.progress * 100) + '%', Math.round(torrent.downloaded / 1024 / 1024), torrent.downloadSpeed / 1024 / 1024)
+    wire.on('piece', (index, offset) => {
+      // console.log('piece from wire', index, offset)
     })
-    torrent.on('upload', () => {
-      console.log('upload', torrent.uploaded)
+    wire.once('close', () => {
+      console.log('wire closed!', addr)
     })
-    torrent.on('peer', (addr) => {
-      console.log('peer', addr)
-    })
-    torrent.on('update', (data) => {
-      console.log(data)
-    })
-    torrent.on('noPeers', (type) => {
-      console.log(type)
-    })
-    torrent.on('wire', () => {
-      console.log('wire')
-    })
-    torrent.on('done', () => {
-      console.log('Torrent download complete!')
-      /*torrent.destroy(() => {
-        console.log('Torrent destroyed!')
-        client.destroy(() => {
-          console.log('client destroyed')
-        })
-      })*/
+  })
+  torrent.on('done', () => {
+    console.log('Torrent download complete! Seeding...')
+    torrent.destroy(() => {
+      clearInterval(timer)
+      console.log('Torrent destroyed!')
+      client.destroy(() => {
+        console.log('client destroyed')
+      })
     })
   })
   torrent.on('infoHash', () => {
-    
+
   })
   torrent.on('metadata', () => {
-    console.log(torrent.bitfield)
-    setTimeout(() => console.log(torrent.bitfield), 100)
+    gotMetadata = true
+    console.log('Got metadata')
   })
 })
 
@@ -78,12 +122,40 @@ function getContentLength (url) {
 
 function handleFile (index, file, state) {
   return new Promise((resolve, reject) => {
+    console.log(file.url)
     const req = fetch(file.url, {concat: false}, (err, res) => {
       if (err) return reject(err)
       const length = +res.headers['content-length']
       const gunzip = zlib.createGunzip()
 
       let downloaded = 0
+      res.pipe(concat((data) => {
+        console.log(data)
+        let buf = zlib.gzipSync(zlib.gunzipSync(data).slice(0, 2048), {
+          // flush: zlib.constants.Z_PARTIAL_FLUSH,
+          // chunkSize: 2048,
+          memLevel: 8,
+          windowBits: 15,
+          level: 9
+        })
+        console.log(buf)
+
+        let d = zlib.createDeflateRaw({
+          flush: zlib.constants.Z_PARTIAL_FLUSH,
+          // chunkSize: 2048,
+          memLevel: 8,
+          windowBits: 15,
+          level: 9
+        })
+        
+        d.pipe(concat((buf) => {
+          console.log(buf)
+        }))
+        d.write(zlib.gunzipSync(data).slice(0, 2048))
+        d.flush()
+        d.write(zlib.gunzipSync(data).slice(2048, 2048 * 2))
+        d.end()
+      }))
       res.on('data', (data) => {
         state.ss.write(data)
         downloaded += data.length
@@ -118,17 +190,22 @@ function handleFile (index, file, state) {
 }
 
 fetchVersions().then((versions) => {
+  /*
   const version = versions['Linux']
-  /*const downloader = downloadGameHttp(version, 'torrent/loe', (err) => {
+  const downloader = downloadGameHttp(version, 'zsync/loe', (err) => {
     console.log('Download complete! Abort:', err)
     // app.quit()
   })
   downloader.ss.on('progress', (info) => {
     console.log(info.eta, Math.round(info.speed / 1024) / 1024, info.length)
-  })*/
-  /*setTimeout(() => {
+  })
+  */
+
+  /*
+  setTimeout(() => {
     downloader.abort()
-  }, 2000)*/
+  }, 2000)
+  */
 })
 
 function fetchVersions () {
@@ -164,13 +241,14 @@ function downloadGameHttp (version, dir, cb) {
   fetch(baseUrl + '.zsync-control.jar', {}, (err, data) => {
     if (err) throw err
     const index = JSON.parse(data.toString('utf8'))
-    const files = index.Content.map((file) => {
+    const files = index.Content.map((file, i) => {
+      console.log(i, file.RelativeContentUrl)
       return {
         url: baseUrl + path.join('loe', file.RelativeContentUrl).replace(/\.zsync\.jar$/i, ''),
         filePath: path.join('loe', file.RelativeContentUrl).replace(/\.jar\.zsync\.jar$/i, ''),
         fileHash: file.FileHash
       }
-    })
+    }).slice(166, 167)
 
     const limitDownload = promiseLimit(3)
     const limitHead = promiseLimit(5)
