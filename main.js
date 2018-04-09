@@ -60,7 +60,7 @@ fetch('https://djazz.se/nas/games/loe/loe-linux.torrent', {}, (err, data) => {
     console.error(err)
   })
   torrent.on('download', (bytes) => {
-    
+
   })
   torrent.on('upload', () => {
     console.log('upload', torrent.uploaded)
@@ -105,7 +105,6 @@ fetch('https://djazz.se/nas/games/loe/loe-linux.torrent', {}, (err, data) => {
   })
 })
 
-
 function getContentLength (url) {
   return new Promise((resolve, reject) => {
     fetch(url, {method: 'head', concat: false}, (err, res) => {
@@ -147,7 +146,7 @@ function handleFile (index, file, state) {
           windowBits: 15,
           level: 9
         })
-        
+
         d.pipe(concat((buf) => {
           console.log(buf)
         }))
@@ -242,10 +241,9 @@ function downloadGameHttp (version, dir, cb) {
     if (err) throw err
     const index = JSON.parse(data.toString('utf8'))
     const files = index.Content.map((file, i) => {
-      console.log(i, file.RelativeContentUrl)
       return {
         url: baseUrl + path.join('loe', file.RelativeContentUrl).replace(/\.zsync\.jar$/i, ''),
-        filePath: path.join('loe', file.RelativeContentUrl).replace(/\.jar\.zsync\.jar$/i, ''),
+        filePath: path.join(file._installPath.replace(/\\/g, '/').replace(/\.jar\.zsync\.jar$/i, '')),
         fileHash: file.FileHash
       }
     }).slice(166, 167)
