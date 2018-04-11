@@ -6,7 +6,8 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "standard main.js"
   },
   "repository": {
     "type": "git",
@@ -22,7 +23,8 @@
   },
   "homepage": "https://github.com/daniel-j/loe-launcher#readme",
   "devDependencies": {
-    "electron": "^2.0.0-beta.7"
+    "electron": "^2.0.0-beta.7",
+    "standard": "^11.0.1"
   },
   "dependencies": {
     "adm-zip": "^0.4.7",
