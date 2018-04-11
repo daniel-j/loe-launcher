@@ -109,6 +109,22 @@ fetch.concat('https://www.legendsofequestria.com/downloads', (err, res, data) =>
 })
 */
 
+/*
+// fetch news
+fetch.concat('https://forum.legendsofequestria.com/index.php?action=.xml;type=atom;sa=news;board=3;limit=5', (err, res, data) => {
+  if (err) throw err
+  const parseString = require('xml2js').parseString;
+  parseString(data.toString('utf8'), (err, result) => {
+    if (err) throw err
+    const latestNewsThread = result.feed.entry[0].link[0].$.href
+    fetch.concat(latestNewsThread, (err, res, data) => {
+      if (err) throw err
+      let html = data.toString('utf8')
+      const ma = html.match(/<div class="post">\n<div class="inner" data-msgid="[0-9]*" id="msg_[0-9]*">(.*)<\/div>\n<\/div>/i)
+      html = ma[1]
+      console.log(html)
+    })
+  })
 })
 */
 
