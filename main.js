@@ -270,7 +270,7 @@ function fetchVersions () {
   return new Promise((resolve, reject) => {
     fetch.concat({url: 'https://patches.legendsofequestria.com/zsync/versions3.json', json: true}, (err, res, data) => {
       if (err) return reject(err)
-      versions = {}
+      const versions = {}
       for (let i in data) {
         let key = i.toLowerCase()
         if (key === 'mac') key = 'macos'
