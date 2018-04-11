@@ -9,18 +9,106 @@ const promiseLimit = require('promise-limit')
 const fetch = require('simple-get')
 const utils = require('./src/utils')
 
-/*
-const mega = require('megajs')
+function getCurrentVersion () {
+  const arch = require('arch')
+  if (process.platform === 'darwin') return 'macos'
+  else if (process.platform === 'win32') return (arch() === 'x64' ? 'win64' : 'win32')
+  else return 'linux'
+}
 
-const file = mega.File.fromURL('https://mega.nz/#!5yYVABiC!94LcCKDUfeM2nYAt1VjpjC_5cB6h2beI3ATRPYsAt9A')
-file.loadAttributes((err) => {
-  console.log(file.name, file.size / 1024 / 1024)
-  let start = 0
-  try {
-    start = fs.statSync(file.name).size
-  } catch (err) {}
-  if (start >= file.size) return
-  file.download({start}).pipe(fs.createWriteStream(file.name, {flags: 'r+', start}))
+/*
+// MEGA downloader
+const mega = require('megajs')
+const unzip = require('unzip').Extract
+const rimraf = require('rimraf')
+
+fetch.concat('https://www.legendsofequestria.com/downloads', (err, res, data) => {
+  if (err) throw err
+  let html = data.toString('utf8')
+  const megaReg = /<a href="(https:\/\/mega\.nz\/#![a-zA-Z0-9_-]*![a-zA-Z0-9_-]*)">(.*?)<\/a>/ig
+  const versions = {}
+  for (let ma; (ma = megaReg.exec(html));) {
+    let key = ma[2].trim().toLowerCase()
+    if (key === 'windows x32') key = 'win32'
+    else if (key === 'windows x64') key = 'win64'
+    versions[key] = ma[1]
+  }
+  const version = getCurrentVersion()
+  const megaUrl = versions[version]
+  if (!megaUrl) throw new Error('MEGA: No version found!')
+  const file = mega.File.fromURL(megaUrl)
+  file.loadAttributes((err) => {
+    if (err) throw err
+    const dlDir = 'dl' // should be set to local user cache
+    const zipfile = path.join(dlDir, 'download.zip')
+
+    function extractAndRemove () {
+      let dir = 'dl/loe'
+      console.log('Removing ' + dir)
+      rimraf(dir, (err) => {
+        if (err) throw err
+        console.log('Extracting...', zipfile)
+        let stream = fs.createReadStream(zipfile).pipe(unzip({
+          path: dir,
+          verbose: true
+        }))
+        stream.on('error', (err) => {
+          console.log('unzip error:', err)
+        })
+        stream.on('close', () => {
+          if (version === 'macos') {
+            fs.chmodSync(path.join(dir, 'loe.app/Contents/MacOS/loe'), 0o755)
+          } else if (version === 'linux') {
+            fs.chmodSync(path.join(dir, 'loe.x86'), 0o755)
+            fs.chmodSync(path.join(dir, 'loe.x86_64'), 0o755)
+          }
+          console.log('Removing', zipfile)
+          fs.unlink(zipfile, (err) => {
+            console.log('Finished!')
+          })
+        })
+      })
+    }
+
+    mkdirp(dlDir, (err) => {
+      let start = 0
+      try {
+        start = fs.statSync(zipfile).size
+      } catch (err) {}
+
+      fs.readFile(path.join(dlDir, 'version.txt'), 'utf8', (err, data) => {
+        if (data !== megaUrl) {
+          // restart download, new version
+          start = 0
+        }
+        fs.writeFile(path.join(dlDir, 'version.txt'), Buffer.from(megaUrl, 'utf8'), (err) => {
+          if (err) throw err
+
+          console.log(file.downloadId)
+          console.log(file.name, Math.round(file.size / 1024 / 1024) + ' MB')
+
+          if (start >= file.size) return extractAndRemove()
+          const ss = progress({
+            time: 300,
+            length: file.size,
+            transferred: start
+          })
+          ss.on('progress', (info) => {
+            console.log(Math.round(info.eta / 60 * 10) / 10, Math.round(info.percentage) + ' %', Math.round(info.speed / 1024 / 1024 * 100) / 100 + ' MB/s')
+          })
+          let stream = file.download({start})
+          stream.pipe(ss).pipe(fs.createWriteStream(zipfile, {flags: start > 0 ? 'r+' : 'w', start}))
+          stream.once('end', () => {
+            if (ss.progress().remaining !== 0) throw new Error('Remaining is not 0')
+            extractAndRemove()
+          })
+        })
+      })
+    })
+  })
+})
+*/
+
 })
 */
 
