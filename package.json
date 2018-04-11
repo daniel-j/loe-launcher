@@ -25,13 +25,17 @@
     "electron": "^2.0.0-beta.7"
   },
   "dependencies": {
+    "adm-zip": "^0.4.7",
     "arch": "^2.1.0",
     "megajs": "^0.13.2",
     "mkdirp": "^0.5.1",
     "progress-stream": "^2.0.0",
     "promise-limit": "^2.6.0",
+    "rimraf": "^2.6.2",
     "simple-get": "^2.7.0",
     "stream-chunker": "^1.2.8",
-    "webtorrent": "^0.98.24"
+    "unzip": "^0.1.11",
+    "webtorrent": "^0.98.24",
+    "xml2js": "^0.4.19"
   }
 }
