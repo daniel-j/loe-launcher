@@ -128,6 +128,7 @@ fetch.concat('https://forum.legendsofequestria.com/index.php?action=.xml;type=at
 })
 */
 
+/*
 const WebTorrent = require('webtorrent')
 
 const client = new WebTorrent({
@@ -207,6 +208,7 @@ fetch.concat('https://djazz.se/nas/games/loe/loe-linux.torrent', (err, res, data
     console.log('Got metadata')
   })
 })
+*/
 
 function getContentLength (url) {
   return new Promise((resolve, reject) => {
@@ -264,30 +266,16 @@ function handleFile (index, file, state) {
   })
 }
 
-fetchVersions().then((versions) => {
-  console.log(versions)
-  /*
-  const version = versions['Linux']
-  const downloader = downloadGameHttp(version, 'zsync/loe', (err) => {
-    console.log('Download complete! Abort:', err)
-    // app.quit()
-  })
-  downloader.ss.on('progress', (info) => {
-    console.log(info.eta, Math.round(info.speed / 1024) / 1024, info.length)
-  })
-  */
-
-  /*
-  setTimeout(() => {
-    downloader.abort()
-  }, 2000)
-  */
-})
-
 function fetchVersions () {
   return new Promise((resolve, reject) => {
-    fetch.concat({url: 'https://patches.legendsofequestria.com/zsync/versions3.json', json: true}, (err, res, versions) => {
+    fetch.concat({url: 'https://patches.legendsofequestria.com/zsync/versions3.json', json: true}, (err, res, data) => {
       if (err) return reject(err)
+      versions = {}
+      for (let i in data) {
+        let key = i.toLowerCase()
+        if (key === 'mac') key = 'macos'
+        versions[key] = data[i]
+      }
       resolve(versions)
     })
   })
@@ -360,3 +348,17 @@ function downloadGameHttp (version, dir, cb) {
   })
   return state
 }
+
+/*
+fetchVersions().then((versions) => {
+  const version = versions[getCurrentVersion()]
+  if (!version) throw new Error('Bad version!')
+  const downloader = downloadGameHttp(version, 'zsync/loe', (err) => {
+    console.log('Download complete! Abort:', err)
+    // app.quit()
+  })
+  downloader.ss.on('progress', (info) => {
+    console.log(info.eta, Math.round(info.speed / 1024) / 1024, info.length)
+  })
+})
+*/
