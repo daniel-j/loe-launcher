@@ -6,9 +6,8 @@ const zlib = require('zlib')
 const mkdirp = require('mkdirp')
 const progress = require('progress-stream')
 const promiseLimit = require('promise-limit')
-const fetch = require('./src/fetch')
+const fetch = require('simple-get')
 const utils = require('./src/utils')
-const concat = require('concat-stream')
 
 /*
 const mega = require('megajs')
@@ -37,7 +36,7 @@ client.on('error', (err) => {
   console.error(err)
 })
 
-fetch('https://djazz.se/nas/games/loe/loe-linux.torrent', {}, (err, data) => {
+fetch.concat('https://djazz.se/nas/games/loe/loe-linux.torrent', (err, res, data) => {
   if (err) throw err
   let ready = false
   let gotMetadata = false
@@ -107,7 +106,7 @@ fetch('https://djazz.se/nas/games/loe/loe-linux.torrent', {}, (err, data) => {
 
 function getContentLength (url) {
   return new Promise((resolve, reject) => {
-    fetch(url, {method: 'head', concat: false}, (err, res) => {
+    fetch({method: 'head', url}, (err, res) => {
       if (err) {
         reject(err)
         return
@@ -122,7 +121,7 @@ function getContentLength (url) {
 function handleFile (index, file, state) {
   return new Promise((resolve, reject) => {
     console.log(file.url)
-    const req = fetch(file.url, {concat: false}, (err, res) => {
+    const req = fetch(file.url, (err, res) => {
       if (err) return reject(err)
       const length = +res.headers['content-length']
       const gunzip = zlib.createGunzip()
@@ -162,6 +161,7 @@ function handleFile (index, file, state) {
 }
 
 fetchVersions().then((versions) => {
+  console.log(versions)
   /*
   const version = versions['Linux']
   const downloader = downloadGameHttp(version, 'zsync/loe', (err) => {
@@ -182,9 +182,8 @@ fetchVersions().then((versions) => {
 
 function fetchVersions () {
   return new Promise((resolve, reject) => {
-    fetch('https://patches.legendsofequestria.com/zsync/versions3.json', {}, (err, data) => {
+    fetch.concat({url: 'https://patches.legendsofequestria.com/zsync/versions3.json', json: true}, (err, res, versions) => {
       if (err) return reject(err)
-      const versions = JSON.parse(data.toString('utf8'))
       resolve(versions)
     })
   })
@@ -210,9 +209,8 @@ function downloadGameHttp (version, dir, cb) {
   }
   const baseUrl = 'https://patches.legendsofequestria.com/zsync/' + version + '/'
 
-  fetch(baseUrl + '.zsync-control.jar', {}, (err, data) => {
+  fetch.concat({url: baseUrl + '.zsync-control.jar', json: true}, (err, res, index) => {
     if (err) throw err
-    const index = JSON.parse(data.toString('utf8'))
     const files = index.Content.map((file, i) => {
       return {
         url: baseUrl + path.join('loe', file.RelativeContentUrl).replace(/\.zsync\.jar$/i, ''),
