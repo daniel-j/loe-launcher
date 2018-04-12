@@ -7,7 +7,7 @@ const mkdirp = require('mkdirp')
 const progress = require('progress-stream')
 const promiseLimit = require('promise-limit')
 const fetch = require('simple-get')
-const utils = require('./src/utils')
+const sleep = require('./utils/sleep')
 
 function getCurrentVersion () {
   const arch = require('arch')
@@ -64,6 +64,7 @@ fetch.concat('https://www.legendsofequestria.com/downloads', (err, res, data) =>
           }
           console.log('Removing', zipfile)
           fs.unlink(zipfile, (err) => {
+            if (err) throw err
             console.log('Finished!')
           })
         })
@@ -71,12 +72,14 @@ fetch.concat('https://www.legendsofequestria.com/downloads', (err, res, data) =>
     }
 
     mkdirp(dlDir, (err) => {
+      if (err) throw err
       let start = 0
       try {
         start = fs.statSync(zipfile).size
       } catch (err) {}
 
       fs.readFile(path.join(dlDir, 'version.txt'), 'utf8', (err, data) => {
+        if (err) {}
         if (data !== megaUrl) {
           // restart download, new version
           start = 0
@@ -89,12 +92,12 @@ fetch.concat('https://www.legendsofequestria.com/downloads', (err, res, data) =>
 
           if (start >= file.size) return extractAndRemove()
           const ss = progress({
-            time: 300,
+            time: 1000,
             length: file.size,
             transferred: start
           })
           ss.on('progress', (info) => {
-            console.log(Math.round(info.eta / 60 * 10) / 10, Math.round(info.percentage) + ' %', Math.round(info.speed / 1024 / 1024 * 100) / 100 + ' MB/s')
+            console.log(Math.round(info.eta / 60 * 10) / 10, Math.round(info.percentage * 10) / 10 + ' %', Math.round(info.speed / 1024 / 1024 * 100) / 100 + ' MB/s')
           })
           let stream = file.download({start})
           stream.pipe(ss).pipe(fs.createWriteStream(zipfile, {flags: start > 0 ? 'r+' : 'w', start}))
@@ -324,7 +327,7 @@ function downloadGameHttp (version, dir, cb) {
           return fileSize
         }).catch((err) => {
           console.error('Error fetching content-length: ' + err)
-          return utils.sleep(5000).then(() => loop()) // Retry after 5 secs
+          return sleep(5000).then(() => loop()) // Retry after 5 secs
         })
       }
       return loop()
@@ -338,7 +341,7 @@ function downloadGameHttp (version, dir, cb) {
         if (state.aborted) return 0
         return handleFile(i, file, state).catch((err) => {
           console.error('Download interrupted: ' + err)
-          return utils.sleep(5000).then(() => loop()) // Retry after 5 secs
+          return sleep(5000).then(() => loop()) // Retry after 5 secs
         })
       }
       return loop()
@@ -355,7 +358,6 @@ fetchVersions().then((versions) => {
   if (!version) throw new Error('Bad version!')
   const downloader = downloadGameHttp(version, 'zsync/loe', (err) => {
     console.log('Download complete! Abort:', err)
-    // app.quit()
   })
   downloader.ss.on('progress', (info) => {
     console.log(info.eta, Math.round(info.speed / 1024) / 1024, info.length)

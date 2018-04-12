@@ -1,7 +1,6 @@
 const electron = require('electron')
 const {app, BrowserWindow} = electron
 const path = require('path')
-const url = require('url')
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
@@ -28,11 +27,7 @@ function createWindow () {
   })
 
   // and load the index.html of the app.
-  mainWindow.loadURL(url.format({
-    pathname: path.join(__dirname, '../../static/app.html'),
-    protocol: 'file:',
-    slashes: true
-  }))
+  mainWindow.loadFile(path.join(__dirname, '../../static/app.html'))
 
   mainWindow.on('ready-to-show', () => {
     mainWindow.show()

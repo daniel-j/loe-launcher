@@ -3,17 +3,22 @@
 <head>
   <meta charset="UTF-8">
   <title>Legends of Equestria Launcher</title>
+  <link rel="stylesheet" type="text/css" href="./style/main.css">
 </head>
 <body>
-<h1>Hello World!</h1>
-<!-- All of the Node.js APIs are available in this renderer process. -->
-We are using Node.js <script>document.write(process.versions.node)</script>,
-Chromium <script>document.write(process.versions.chrome)</script>,
-and Electron <script>document.write(process.versions.electron)</script>.
+<div id="backdrop"></div>
+<img src="assets/logo.png" id="logo"/>
+
+<div id="content">
+  <button id="launchbtn">Launch!</button>
+  <div id="progressbox">
+    <div id="progressstatus">50 MB/s</div>
+    <div id="progress"><div id="progresspoint">20%</div></div>
+  </div>
+</div>
 
 <script>
-// You can also require other files to run in this process
-require('./src/renderer/app')
+require('../src/renderer/app')
 </script>
 </body>
 </html>
