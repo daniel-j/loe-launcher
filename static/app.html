@@ -10,11 +10,19 @@
 <img src="assets/logo.png" id="logo"/>
 
 <div id="content">
-  <button id="launchbtn">Launch!</button>
+  <button class="loebtn" id="launchbtn" disabled>Launch!</button>
   <div id="progressbox">
-    <div id="progressstatus">50 MB/s</div>
-    <div id="progress"><div id="progresspoint">20%</div></div>
+    <div id="progressstatus">
+      <button>⏸</button>
+      <span>Downloading</span>
+      <span>1.3 MB/s</span>
+    </div>
+    <div id="progress"><div id="progresspoint"><span>27 %</span></div></div>
   </div>
+</div>
+
+<div id="newsbox">
+  <webview id="newsview" src="news.html" preload="../src/renderer/news.js"></webview>
 </div>
 
 <script>

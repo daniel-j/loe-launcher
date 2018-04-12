@@ -28,7 +28,9 @@
   },
   "dependencies": {
     "adm-zip": "^0.4.7",
+    "application-config": "^1.0.1",
     "arch": "^2.1.0",
+    "debounce": "^1.1.0",
     "megajs": "^0.13.2",
     "mkdirp": "^0.5.1",
     "progress-stream": "^2.0.0",
