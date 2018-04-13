@@ -1,15 +1,13 @@
 console.time('init')
 
 const electron = require('electron')
-const {app, BrowserWindow} = electron
+const {app} = electron
 const config = require('../config')
 const crashReporter = require('../crash-reporter')
 const ipc = require('./ipc')
 const log = require('./log')
-const State = require('./state')
+const State = require('../state')
 const windows = require('./windows')
-
-const path = require('path')
 
 let shouldQuit = false
 let argv = sliceArgv(process.argv)
@@ -47,10 +45,10 @@ function init () {
 
   app.on('ready', () => State.load(onReady))
 
-  function onReady (err, results) {
+  function onReady (err, state) {
+    if (err) throw err
 
     isReady = true
-    const state = results.state
 
     windows.main.init(state, {hidden: hidden})
     windows.webtorrent.init()
@@ -104,22 +102,17 @@ function init () {
 function delayedInit (state) {
   if (app.isQuitting) return
 
-  const announcement = require('./announcement')
+  // const announcement = require('./announcement')
   const dock = require('./dock')
   const updater = require('./updater')
 
-  announcement.init()
+  // announcement.init()
   dock.init()
   updater.init()
 
   if (process.platform === 'win32') {
     const userTasks = require('./user-tasks')
     userTasks.init()
-  }
-
-  if (process.platform !== 'darwin') {
-    const tray = require('./tray')
-    tray.init()
   }
 }
 
@@ -188,79 +181,3 @@ function processArgv (argv) {
     windows.main.dispatch('onOpen', appArgs)
   }
 }
-
-/*
-
-// Keep a global reference of the window object, if you don't, the window will
-// be closed automatically when the JavaScript object is garbage collected.
-let mainWindow
-
-function onReady () {
-  const ipcMain = electron.ipcMain
-  createWindow()
-}
-
-function createWindow () {
-  // Create the browser window.
-  mainWindow = new BrowserWindow({
-    minWidth: 600,
-    minHeight: 350,
-    width: 640,
-    height: 360,
-    useContentSize: true,
-    fullscreenable: false,
-    show: false,
-    title: 'Legends of Equestria Launcher',
-    autoHideMenuBar: true,
-    darkTheme: true,
-    titleBarStyle: 'hiddenInset',
-    webPreferences: {
-      webgl: false,
-      webaudio: false
-    }
-  })
-
-  // and load the index.html of the app.
-  mainWindow.loadFile(path.join(__dirname, '..', '..', 'static', 'app.html'))
-
-  mainWindow.on('ready-to-show', () => {
-    mainWindow.show()
-  })
-
-  // Open the DevTools.
-  // mainWindow.webContents.openDevTools()
-
-  // Emitted when the window is closed.
-  mainWindow.on('closed', () => {
-    // Dereference the window object, usually you would store windows
-    // in an array if your app supports multi windows, this is the time
-    // when you should delete the corresponding element.
-    mainWindow = null
-  })
-}
-
-// This method will be called when Electron has finished
-// initialization and is ready to create browser windows.
-// Some APIs can only be used after this event occurs.
-app.on('ready', onReady)
-
-// Quit when all windows are closed.
-app.on('window-all-closed', () => {
-  // On OS X it is common for applications and their menu bar
-  // to stay active until the user quits explicitly with Cmd + Q
-  if (process.platform !== 'darwin') {
-    app.quit()
-  }
-})
-
-app.on('activate', () => {
-  // On OS X it's common to re-create a window in the app when the
-  // dock icon is clicked and there are no other windows open.
-  if (mainWindow === null) {
-    createWindow()
-  }
-})
-
-// In this file you can include the rest of your app's specific main process
-// code. You can also put them in separate files and require them here.
-*/

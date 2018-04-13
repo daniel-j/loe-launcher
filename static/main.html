@@ -7,7 +7,7 @@
 </head>
 <body>
 <div id="backdrop"></div>
-<img src="assets/logo.png" id="logo"/>
+<img src="assets/logo.png" id="logo" draggable="false"/>
 
 <div id="content">
   <button class="loebtn" id="launchbtn" disabled>Launch!</button>
@@ -22,11 +22,11 @@
 </div>
 
 <div id="newsbox">
-  <webview id="newsview" src="news.html" preload="../src/renderer/news.js"></webview>
+  <webview id="newsview" src="news.html" preload="../src/renderer/news"></webview>
 </div>
 
 <script>
-require('../src/renderer/app')
+require('../src/renderer/main')
 </script>
 </body>
 </html>

@@ -23,12 +23,17 @@ function init (state, options) {
   }
 
   const initialBounds = Object.assign(config.WINDOW_INITIAL_BOUNDS)
+  console.log({
+    minHeight: config.WINDOW_MIN_HEIGHT,
+    minWidth: config.WINDOW_MIN_WIDTH
+  })
 
   const win = main.win = new electron.BrowserWindow({
     backgroundColor: '#FFFFFF',
     backgroundThrottling: true, // do not throttle animations/timers when page is background
     darkTheme: true, // Forces dark theme (GTK+3)
     height: initialBounds.height,
+    fullscreenable: false,
     icon: getIconPath(), // Window icon (Windows, Linux)
     minHeight: config.WINDOW_MIN_HEIGHT,
     minWidth: config.WINDOW_MIN_WIDTH,
@@ -44,7 +49,7 @@ function init (state, options) {
   win.loadFile(config.WINDOW_MAIN)
 
   // No menu
-  win.setMenu(null)
+  // win.setMenu(null)
 
   win.once('ready-to-show', () => {
     if (!options.hidden) win.show()
@@ -86,7 +91,6 @@ function send (...args) {
   if (!main.win) return
   main.win.send(...args)
 }
-
 
 /**
  * Set progress bar to [0, 1]. Indeterminate when > 1. Remove with < 0.

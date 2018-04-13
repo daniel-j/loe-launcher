@@ -41,7 +41,7 @@ function onResponse (err, res, data) {
     data = {
       title: 'Legends of Equestria Announcement',
       message: data.toString(),
-      detail: data.toString()
+      detail: null
     }
   }
 
@@ -51,7 +51,5 @@ function onResponse (err, res, data) {
     title: data.title,
     message: data.message,
     detail: data.detail
-  }, noop)
+  }, () => {})
 }
-
-function noop () {}

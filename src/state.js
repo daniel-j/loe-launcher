@@ -1,5 +1,5 @@
 
-const config = require('../config')
+const config = require('./config')
 const appConfig = require('application-config')(config.APP_NAME)
 const path = require('path')
 const {EventEmitter} = require('events')

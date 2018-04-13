@@ -41,15 +41,15 @@ module.exports = {
   STATIC_PATH: path.join(__dirname, '..', 'static'),
 
   WINDOW_ABOUT: path.join(__dirname, '..', 'static', 'about.html'),
-  WINDOW_MAIN: path.join(__dirname, '..', 'static', 'app.html'),
+  WINDOW_MAIN: path.join(__dirname, '..', 'static', 'main.html'),
   WINDOW_WEBTORRENT: path.join(__dirname, '..', 'static', 'webtorrent.html'),
 
   WINDOW_INITIAL_BOUNDS: {
     width: 640,
     height: 360
   },
-  WINDOW_MIN_HEIGHT: 600,
-  WINDOW_MIN_WIDTH: 350
+  WINDOW_MIN_HEIGHT: 350,
+  WINDOW_MIN_WIDTH: 600
 }
 
 function getConfigPath () {
