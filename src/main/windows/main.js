@@ -23,10 +23,6 @@ function init (state, options) {
   }
 
   const initialBounds = Object.assign(config.WINDOW_INITIAL_BOUNDS)
-  console.log({
-    minHeight: config.WINDOW_MIN_HEIGHT,
-    minWidth: config.WINDOW_MIN_WIDTH
-  })
 
   const win = main.win = new electron.BrowserWindow({
     backgroundColor: '#FFFFFF',

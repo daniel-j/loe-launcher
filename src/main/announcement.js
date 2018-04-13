@@ -12,20 +12,22 @@ const ANNOUNCEMENT_URL = config.ANNOUNCEMENT_URL +
   '&platform=' + process.platform
 
 /**
- * In certain situations, the WebTorrent team may need to show an announcement to
- * all WebTorrent Desktop users. For example: a security notice, or an update
+ * In certain situations, the Legends of Equestria team may need to show an
+ * announcement to all users. For example: a security notice, or an update
  * notification (if the auto-updater stops working).
  *
  * When there is an announcement, the `ANNOUNCEMENT_URL` endpoint should return an
  * HTTP 200 status code with a JSON object like this:
  *
  *   {
- *     "title": "WebTorrent Desktop Announcement",
+ *     "title": "Legends of Equestria Announcement",
  *     "message": "Security Issue in v0.xx",
  *     "detail": "Please update to v0.xx as soon as possible..."
  *   }
  */
+
 function init () {
+  return // TODO: Make announcement endpoint
   const get = require('simple-get')
   get.concat(ANNOUNCEMENT_URL, onResponse)
 }

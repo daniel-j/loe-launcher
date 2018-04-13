@@ -24,8 +24,7 @@ if (config.IS_PRODUCTION) {
 if (!shouldQuit) {
   // Prevent multiple instances of app from running at same time. New instances
   // signal this instance and quit. Note: This feature creates a lock file in
-  // %APPDATA%\Roaming\WebTorrent so we do not do it for the Portable App since
-  // we want to be "silent" as well as "portable".
+  // %APPDATA%\Roaming\Legends of Equestria Launcher
   shouldQuit = app.makeSingleInstance(onAppOpen)
   if (shouldQuit) {
     app.quit()

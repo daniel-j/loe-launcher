@@ -65,7 +65,7 @@ function getDefaultState () {
 function setupStateSaved (cb) {
   const saved = {
     prefs: {
-      installLocation: null,
+      downloadPath: config.DEFAULT_DOWNLOAD_PATH,
       installedVersion: null,
       currentDownloadMethod: null, /* mega, torrent or zsync */
       platform: null, /* win32, win64, macos, linux */
