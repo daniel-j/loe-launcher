@@ -16,11 +16,6 @@ let argv = sliceArgv(process.argv)
 // (On Windows and Linux, we get a flag. On MacOS, we get special API.)
 const hidden = argv.includes('--hidden') || (process.platform === 'darwin' && app.getLoginItemSettings().wasOpenedAsHidden)
 
-if (config.IS_PRODUCTION) {
-  // When Electron is running in production mode (packaged app), set NODE_ENV
-  process.env.NODE_ENV = 'production'
-}
-
 if (!shouldQuit) {
   // Prevent multiple instances of app from running at same time. New instances
   // signal this instance and quit. Note: This feature creates a lock file in
@@ -110,7 +105,7 @@ function delayedInit (state) {
   updater.init()
 
   if (process.platform === 'win32') {
-    const userTasks = require('./user-tasks')
+    // const userTasks = require('./user-tasks')
     userTasks.init()
   }
 }
@@ -153,7 +148,7 @@ function processArgv (argv) {
   argv.forEach(function (arg) {
     if (arg === '-n' || arg === '-o' || arg === '-u') {
       // Critical path: Only load the 'dialog' package if it is needed
-      const dialog = require('./dialog')
+      // const dialog = require('./dialog')
       if (arg === '-n') {
         dialog.openSeedDirectory()
       } else if (arg === '-o') {

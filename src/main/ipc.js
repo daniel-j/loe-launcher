@@ -34,11 +34,11 @@ function init () {
    */
 
   ipc.on('openTorrentFile', () => {
-    const dialog = require('./dialog')
+    // const dialog = require('./dialog')
     dialog.openTorrentFile()
   })
   ipc.on('openFiles', () => {
-    const dialog = require('./dialog')
+    // const dialog = require('./dialog')
     dialog.openFiles()
   })
 
@@ -54,7 +54,6 @@ function init () {
     const dock = require('./dock')
     dock.downloadFinished(...args)
   })
-
 
   /**
    * Shell
