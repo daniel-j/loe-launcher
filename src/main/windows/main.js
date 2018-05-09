@@ -42,7 +42,7 @@ function init (state, options) {
     y: initialBounds.y
   })
 
-  win.loadFile(config.WINDOW_MAIN)
+  win.loadURL('file://' + config.WINDOW_MAIN)
 
   // No menu
   // win.setMenu(null)

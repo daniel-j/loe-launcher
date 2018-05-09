@@ -28,7 +28,7 @@ function init () {
     width: 150
   })
 
-  win.loadFile(config.WINDOW_WEBTORRENT)
+  win.loadURL('file://' + config.WINDOW_WEBTORRENT)
 
   // Prevent killing the WebTorrent process
   win.on('close', function (e) {

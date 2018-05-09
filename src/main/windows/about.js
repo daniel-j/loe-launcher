@@ -27,7 +27,7 @@ function init () {
     width: 300
   })
 
-  win.loadFile(config.WINDOW_ABOUT)
+  win.loadURL('file://' + config.WINDOW_ABOUT)
 
   // No menu on the About window
   win.setMenu(null)
