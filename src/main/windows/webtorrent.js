@@ -7,7 +7,7 @@ const webtorrent = module.exports = {
 }
 
 const electron = require('electron')
-
+const formatUrl = require('url').format
 const config = require('../../config')
 
 function init () {
@@ -28,7 +28,11 @@ function init () {
     width: 150
   })
 
-  win.loadURL('file://' + config.WINDOW_WEBTORRENT)
+  win.loadURL(formatUrl({
+    protocol: 'file',
+    slashes: true,
+    pathname: config.WINDOW_WEBTORRENT
+  }))
 
   // Prevent killing the WebTorrent process
   win.on('close', function (e) {

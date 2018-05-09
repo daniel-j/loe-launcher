@@ -3,8 +3,9 @@ const about = module.exports = {
   win: null
 }
 
-const config = require('../../config')
 const electron = require('electron')
+const formatUrl = require('url').format
+const config = require('../../config')
 
 function init () {
   if (about.win) {
@@ -27,7 +28,11 @@ function init () {
     width: 300
   })
 
-  win.loadURL('file://' + config.WINDOW_ABOUT)
+  win.loadURL(formatUrl({
+    protocol: 'file',
+    slashes: true,
+    pathname: config.WINDOW_ABOUT
+  }))
 
   // No menu on the About window
   win.setMenu(null)

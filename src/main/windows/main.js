@@ -11,9 +11,8 @@ const main = module.exports = {
 }
 
 const electron = require('electron')
-
 const app = electron.app
-
+const formatUrl = require('url').format
 const config = require('../../config')
 const log = require('../log')
 
@@ -42,7 +41,11 @@ function init (state, options) {
     y: initialBounds.y
   })
 
-  win.loadURL('file://' + config.WINDOW_MAIN)
+  win.loadURL(formatUrl({
+    protocol: 'file',
+    slashes: true,
+    pathname: config.WINDOW_MAIN
+  }))
 
   // No menu
   // win.setMenu(null)
