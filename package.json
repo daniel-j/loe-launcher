@@ -11,15 +11,14 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "standard src/**/*.js || true",
     "dist": "electron-builder",
-    "dist:dir": "npm run dist -- --dir -c.compression=store -c.mac.identity=null"
+    "dist:dir": "npm run dist -- --dir -c.compression=store -c.mac.asar=false -c.linux.asar=false -c.mac.identity=null"
   },
   "build": {
     "appId": "loe-launcher",
     "productName": "Legends of Equestria Launcher",
     "files": ["src", "static", "build"],
     "mac": {
-      "category": "public.app-category.role-playing-games",
-      "asar": false
+      "category": "public.app-category.role-playing-games"
     },
     "linux": {
       "category": "RolePlaying"
