@@ -6,6 +6,7 @@ const appConfig = require('application-config')(APP_NAME)
 const path = require('path')
 const electron = require('electron')
 const arch = require('arch')
+const cachedir = require('./utils/cachedir')
 
 const IS_PRODUCTION = isProduction()
 
@@ -57,11 +58,13 @@ function getConfigPath () {
 }
 
 function getDefaultDownloadPath () {
-  return getPath('downloads') // TODO
+  return getPath('cache')
 }
 
 function getPath (key) {
-  if (!process.versions.electron) {
+  if (key === 'cache') {
+    return cachedir(APP_NAME)
+  } else if (!process.versions.electron) {
     // Node.js process
     return ''
   } else if (process.type === 'renderer') {
