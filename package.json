@@ -38,7 +38,7 @@
   },
   "homepage": "https://github.com/daniel-j/loe-launcher#readme",
   "devDependencies": {
-    "electron": "^1.8.6",
+    "electron": "^2.0.0",
     "electron-builder": "^20.13.3",
     "standard": "^11.0.1"
   },

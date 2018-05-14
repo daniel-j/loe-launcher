@@ -37,6 +37,11 @@ function init () {
   app.ipcReady = false // main window has finished loading and IPC is ready
   app.isQuitting = false
 
+  // workaround for a drag-drop bug in Electron 2.0.0 on Linux
+  if (process.platform === 'linux') {
+    app.disableHardwareAcceleration()
+  }
+
   app.on('ready', () => State.load(onReady))
 
   function onReady (err, state) {
