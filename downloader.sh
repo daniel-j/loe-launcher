@@ -5,15 +5,16 @@ IFS=$'\n\t'
 
 platform="Linux"
 gamedir="./dl"
-zsync="/home/djazz/Downloads/AppImage-zsync-curl/src/zsync_curl"
+zsync="zsync_curl"
 mkdir -p "$gamedir"
+
 
 versions="https://patches.legendsofequestria.com/zsync/versions3.json"
 version=`curl -sL "$versions" | jq -r .$platform`
 
 baseurl="https://patches.legendsofequestria.com/zsync/$version/"
 
-index=`curl --progress-bar -L "$baseurl/.zsync-control.jar"`
+index=`curl -f --progress-bar -L "$baseurl/.zsync-control.jar"`
 
 IFS=$'\n' relativeContentUrls=(`echo "$index" | jq -r '.Content[].RelativeContentUrl'`)
 IFS=$'\n' fileHashes=(`echo "$index" | jq -r '.Content[].FileHash'`)
