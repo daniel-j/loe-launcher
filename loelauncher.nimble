@@ -5,6 +5,7 @@ author        = "djazz"
 description   = "Legends of Equestria launcher and updater"
 license       = "MIT"
 srcDir        = "src"
+binDir        = "build"
 bin           = @["loelauncher"]
 
 backend       = "cpp"
