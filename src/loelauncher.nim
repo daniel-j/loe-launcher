@@ -3,6 +3,18 @@ import ../webview/src/webview
 import json
 import httpclient
 import os
+import asynchttpserver, asyncdispatch
+import threadpool
+
+spawn (proc () =
+  var server = newAsyncHttpServer()
+  proc cb(req: Request) {.async.} =
+    echo " --> request"
+    await req.respond(Http200, "Hello World")
+    echo " <-- response"
+
+  waitFor server.serve(Port(8080), cb, "127.0.0.1")
+)()
 
 echo "starting"
 
