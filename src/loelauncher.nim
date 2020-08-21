@@ -62,7 +62,7 @@ w.bind("externalNavigate", proc(args: JsonNode): JsonNode =
   echo "target: ", target
 )
 
-let uri = "file://" & getCurrentDir() / "static" / "main.html"
+let uri = "file://" & getAppDir() / "static" / "main.html"
 echo "navigating to ", uri
 
 w.navigate(uri)
