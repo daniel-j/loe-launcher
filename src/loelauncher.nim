@@ -1,4 +1,5 @@
 import ../webview/src/webview
+import ../webview/src/webview/utils
 
 import json
 import httpclient
